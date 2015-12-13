@@ -1,0 +1,18 @@
+Do not build spamc
+
+The build system do not support the cross-compilation of spamc, an
+executable which embeds libperl
+(note: the option BUILD_SPAMC=yes/no is handled only on Windows)
+
+Signed-off-by: Francois Perrad <francois.perrad@gadz.org>
+
+--- a/Makefile.PL
++++ b/Makefile.PL
+@@ -142,7 +142,6 @@
+       'sa-compile.raw'   => 'sa-compile',
+       'sa-awl.raw'       => 'sa-awl',
+       'sa-check_spamd.raw' => 'sa-check_spamd',
+-      'spamc/spamc.c'    => 'spamc/spamc$(EXE_EXT)',
+       'spamd/spamd.raw'  => 'spamd/spamd',
+     },
+ 

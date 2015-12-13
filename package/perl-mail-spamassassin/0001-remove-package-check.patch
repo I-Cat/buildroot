@@ -1,0 +1,32 @@
+Remove host-perl-* dependencies
+
+Signed-off-by: Francois Perrad <francois.perrad@gadz.org>
+
+--- a/Makefile.PL
++++ b/Makefile.PL
+@@ -304,16 +302,6 @@
+ 
+ ';
+ 
+-# check optional module versions
+-use lib 'lib';
+-use Mail::SpamAssassin::Util::DependencyInfo;
+-if (Mail::SpamAssassin::Util::DependencyInfo::long_diagnostics() != 0) {
+-  # missing required module?  die!
+-  # bug 5908: http://cpantest.grango.org/wiki/CPANAuthorNotes says
+-  # we should exit with a status of 0, but without creating Makefile
+-  exit 0;
+-}
+-
+ foreach my $file (@FILES_THAT_MUST_EXIST) {
+   open (TOUCH, ">>$file") or die "cannot touch '$file'";
+   close TOUCH;
+@@ -1013,7 +1001,7 @@
+ 
+ FIXBANG		= -Msharpbang \
+                   -Mconditional \
+-		  -DPERL_BIN="$(PERL_BIN)" \
++		  -DPERL_BIN="/usr/bin/perl" \
+ 		  -DPERL_WARN="$(PERL_WARN)" \
+ 		  -DPERL_TAINT="$(PERL_TAINT)"
+ 

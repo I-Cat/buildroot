@@ -1,0 +1,21 @@
+Do not build spamassassin rules
+
+Remove this target as it requires to install/run SpamAssassin on the
+host. As we don't want install host-perl modules, this step is disabled.
+Please, consider the installed script `sa-update` for installing the
+rules for the first time.
+
+Signed-off-by: Francois Perrad <francois.perrad@gadz.org>
+
+--- a/Makefile.PL
++++ b/Makefile.PL
+@@ -1023,7 +1011,7 @@
+ sa-learn: sa-learn.raw
+ 	$(PREPROCESS) $(FIXBYTES) $(FIXVARS) $(FIXBANG) -m$(PERM_RWX) -i$? -o$@
+ 
+-sa-update: sa-update.raw build_rules
++sa-update: sa-update.raw
+ 	$(PREPROCESS) $(FIXBYTES) $(FIXVARS) $(FIXBANG) -m$(PERM_RWX) -isa-update.raw -osa-update
+ 
+ sa-compile: sa-compile.raw
+
