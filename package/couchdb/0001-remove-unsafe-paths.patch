@@ -1,0 +1,41 @@
+From 39b34b35ac4741f65c0a4707b480301154ab2de5 Mon Sep 17 00:00:00 2001
+From: Nicolas Cavallari <nicolas.cavallari@green-communications.fr>
+Date: Thu, 19 May 2016 16:52:53 +0200
+Subject: configure.ac: Remove unsafe paths
+
+Remove the unconditionnally added paths to the host.
+
+Upstream-Status: not-applicable: later versions do not use autotools
+anymore, but rebar.
+
+Signed-Off-By: Nicolas Cavallari <nicolas.cavallari@green-communications.fr>
+
+---
+ configure.ac | 11 -----------
+ 1 file changed, 11 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index bf9ffc4..7b95554 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -195,17 +195,6 @@ AC_ARG_ENABLE([js-trunk],
+ AC_ARG_VAR([ERLC_FLAGS], [general flags to prepend to ERLC_FLAGS])
+ AC_ARG_VAR([FLAGS], [general flags to prepend to LDFLAGS and CPPFLAGS])
+ 
+-AS_CASE([$(uname -s)], [CYGWIN*], [] , [*], [
+-    CPPFLAGS="$CPPFLAGS -I/opt/local/include"
+-    CPPFLAGS="$CPPFLAGS -I/opt/local/include/js"
+-    CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+-    CPPFLAGS="$CPPFLAGS -I/usr/local/include/js"
+-    CPPFLAGS="$CPPFLAGS -I/usr/include"
+-    CPPFLAGS="$CPPFLAGS -I/usr/include/js"
+-    LDFLAGS="$LDFLAGS -L/opt/local/lib"
+-    LDFLAGS="$LDFLAGS -L/usr/local/lib"
+-])
+-
+ CPPFLAGS="$CPPFLAGS $FLAGS"
+ LDFLAGS="$LDFLAGS $FLAGS"
+ 
+-- 
+2.8.1
+

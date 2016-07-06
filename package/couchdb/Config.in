@@ -1,0 +1,32 @@
+comment "CouchDB needs a toolchain with C++, wchar, NPTL, dynamic libs, gcc >= 4.8, host gcc >= 4.8"
+	depends on !BR2_BINFMT_FLAT
+	depends on BR2_USE_MMU
+	depends on !BR2_PACKAGE_ERLANG_ARCH_SUPPORTS
+	depends on !BR2_PACKAGE_LIBNSPR_ARCH_SUPPORT
+	depends on !BR2_TOOLCHAIN_HAS_THREADS_NPTL || \
+		BR2_STATIC_LIBS || !BR2_INSTALL_LIBSTDCPP || \
+		!BR2_USE_WCHAR || \
+		!BR2_TOOLCHAIN_GCC_AT_LEAST_4_8 || \
+		!BR2_HOST_GCC_AT_LEAST_4_8
+
+config BR2_PACKAGE_COUCHDB
+	bool "couchdb"
+	depends on !BR2_BINFMT_FLAT # icu
+	depends on BR2_HOST_GCC_AT_LEAST_4_8 # icu
+	depends on BR2_INSTALL_LIBSTDCPP # icu, couch-libmozjs185
+	depends on BR2_PACKAGE_ERLANG_ARCH_SUPPORTS
+	depends on BR2_PACKAGE_LIBNSPR_ARCH_SUPPORT # couch-libmozjs185
+	depends on !BR2_STATIC_LIBS # erlang
+	depends on BR2_TOOLCHAIN_HAS_THREADS_NPTL # couch-libmozjs185
+	depends on BR2_TOOLCHAIN_GCC_AT_LEAST_4_8 # icu
+	depends on BR2_USE_MMU # erlang, couch-libmozjs185
+	depends on BR2_USE_WCHAR # icu
+	select BR2_PACKAGE_COUCH_LIBMOZJS185
+	select BR2_PACKAGE_ERLANG
+	select BR2_PACKAGE_ICU
+	select BR2_PACKAGE_LIBCURL
+	select BR2_PACKAGE_OPENSSL
+	help
+	  Apache CouchDB database
+
+	  https://couchdb.apache.org/
