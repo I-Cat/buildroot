@@ -23,8 +23,8 @@ config BR2_PACKAGE_KODI_PLATFORM_SUPPORTS_GBM_GL
 	depends on BR2_PACKAGE_HAS_LIBGL
 	depends on BR2_PACKAGE_HAS_LIBEGL
 	depends on BR2_PACKAGE_MESA3D_GBM
-	depends on BR2_PACKAGE_HAS_UDEV # libinput
 	select BR2_PACKAGE_KODI_PLATFORM_SUPPORTS
+	select BR2_PACKAGE_LIBUDEV
 
 config BR2_PACKAGE_KODI_PLATFORM_SUPPORTS_GBM_GLES
 	bool
@@ -32,8 +32,8 @@ config BR2_PACKAGE_KODI_PLATFORM_SUPPORTS_GBM_GLES
 	depends on BR2_PACKAGE_HAS_LIBEGL
 	depends on BR2_PACKAGE_HAS_LIBGLES
 	depends on BR2_PACKAGE_MESA3D_GBM
-	depends on BR2_PACKAGE_HAS_UDEV # libinput
 	select BR2_PACKAGE_KODI_PLATFORM_SUPPORTS
+	select BR2_PACKAGE_LIBUDEV
 
 config BR2_PACKAGE_KODI_PLATFORM_SUPPORTS_RBPI
 	bool
@@ -179,14 +179,11 @@ config BR2_PACKAGE_KODI_LIBBLURAY
 
 config BR2_PACKAGE_KODI_LIBCEC
 	bool "hdmi cec"
-	depends on BR2_PACKAGE_HAS_UDEV
 	select BR2_PACKAGE_LIBCEC
+	select BR2_PACKAGE_LIBUDEV
 	help
 	  Enable CEC (Consumer Electronics Control) support.
 	  Select this if you want Kodi to support HDMI CEC.
-
-comment "hdmi cec support needs udev /dev management"
-	depends on !BR2_PACKAGE_HAS_UDEV
 
 config BR2_PACKAGE_KODI_LCMS2
 	bool "lcms2"
@@ -303,7 +300,7 @@ config BR2_PACKAGE_KODI_LIBUSB
 	bool "usb"
 	# https://github.com/xbmc/xbmc/blob/Jarvis/configure.ac#L1554
 	# "if libudev is available, we don't need libusb"
-	depends on !BR2_PACKAGE_HAS_UDEV
+	depends on !BR2_PACKAGE_HAS_LIBUDEV
 	select BR2_PACKAGE_LIBUSB
 	select BR2_PACKAGE_LIBUSB_COMPAT
 	help
