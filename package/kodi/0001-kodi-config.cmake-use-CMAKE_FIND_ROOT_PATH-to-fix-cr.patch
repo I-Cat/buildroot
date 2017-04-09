@@ -17,8 +17,8 @@ Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
 
 diff --git a/project/cmake/KodiConfig.cmake.in b/project/cmake/KodiConfig.cmake.in
 index 76626ec..ffb8e1d 100644
---- a/project/cmake/KodiConfig.cmake.in
-+++ b/project/cmake/KodiConfig.cmake.in
+--- a/cmake/KodiConfig.cmake.in
++++ b/cmake/KodiConfig.cmake.in
 @@ -7,7 +7,7 @@ if(NOT @APP_NAME_UC@_PREFIX)
    set(@APP_NAME_UC@_PREFIX @APP_PREFIX@)
  endif()

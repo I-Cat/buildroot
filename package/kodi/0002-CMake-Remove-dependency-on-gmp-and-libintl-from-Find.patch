@@ -13,8 +13,8 @@ https://github.com/xbmc/xbmc/pull/10973#pullrequestreview-34179550
 Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
 
 diff -Naur kodi-17.1-Krypton/project/cmake/modules/FindPython.cmake kodi-17.1-Krypton.patch/project/cmake/modules/FindPython.cmake
---- kodi-17.1-Krypton/project/cmake/modules/FindPython.cmake	2017-03-20 17:17:49.000000000 +0100
-+++ kodi-17.1-Krypton.patch/project/cmake/modules/FindPython.cmake	2017-03-30 11:10:01.065718667 +0200
+--- kodi-17.1-Krypton/cmake/modules/FindPython.cmake	2017-03-20 17:17:49.000000000 +0100
++++ kodi-17.1-Krypton.patch/cmake/modules/FindPython.cmake	2017-03-30 11:10:01.065718667 +0200
 @@ -16,14 +16,12 @@
  if(KODI_DEPENDSBUILD)
    find_library(FFI_LIBRARY ffi REQUIRED)
