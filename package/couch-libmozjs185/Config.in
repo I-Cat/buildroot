@@ -1,0 +1,23 @@
+config BR2_PACKAGE_COUCH_LIBMOZJS185
+	bool "couch-libmozjs185"
+	depends on BR2_PACKAGE_LIBNSPR_ARCH_SUPPORT
+	depends on BR2_INSTALL_LIBSTDCPP
+	depends on !BR2_STATIC_LIBS
+	depends on BR2_TOOLCHAIN_HAS_THREADS_NPTL # pthread_getattr_np()
+	select BR2_PACKAGE_LIBFFI if !BR2_ARM_CPU_ARMV7M
+	select BR2_PACKAGE_LIBNSPR
+	help
+	  SpiderMonkey JavaScript engine
+
+	  SpiderMonkey is the code-name for the Mozilla's C implementation of
+	  JavaScript. It is intended to be embedded in other applications
+	  that provide host environments for JavaScript.
+
+	  This is the CouchDB-approved version of this library.
+
+	  https://github.com/apache/couchdb-pkg/tree/master/js
+
+comment "couch-libmozjs185 needs a toolchain with C++, dynamic library, NPTL"
+	depends on !BR2_PACKAGE_LIBNSPR_ARCH_SUPPORT
+	depends on !BR2_INSTALL_LIBSTDCPP || BR2_STATIC_LIBS || \
+		!BR2_TOOLCHAIN_HAS_THREADS_NPTL
