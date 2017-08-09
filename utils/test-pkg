@@ -165,7 +165,7 @@ build_one() {
     rm -f "${dir}/missing.config"
 
     if [ -n "${pkg}" ]; then
-        if ! make O="${dir}" "${pkg}-dirclean" >> "${dir}/logfile" 2>&1; then
+        if ! make -j9 O="${dir}" "${pkg}-dirclean" >> "${dir}/logfile" 2>&1; then
             return 2
         fi
     fi
