@@ -15,3 +15,4 @@ XLIB_LIBXT_CONF_OPTS = --disable-malloc0returnsnull --disable-install-makestrs
 XLIB_LIBXT_AUTORECONF = YES
 
 $(eval $(autotools-package))
+$(eval $(host-autotools-package))
