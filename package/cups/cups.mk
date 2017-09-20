@@ -12,12 +12,19 @@ CUPS_LICENSE_FILES = LICENSE.txt
 CUPS_INSTALL_STAGING = YES
 CUPS_INSTALL_STAGING_OPTS = DESTDIR=$(STAGING_DIR) DSTROOT=$(STAGING_DIR) install
 CUPS_INSTALL_TARGET_OPTS = DESTDIR=$(TARGET_DIR) DSTROOT=$(TARGET_DIR) install
+HOST_CUPS_INSTALL_OPTS = \
+	DESTDIR=$(HOST_DIR) \
+	ICONDIR=$(HOST_DIR)/usr/share/icons \
+	INITDIR=$(HOST_DIR)/etc \
+	MENUDIR=$(HOST_DIR)/usr/share/applications \
+	install
 
 # Using autoconf, not autoheader, so we cannot use AUTORECONF = YES.
 define CUPS_RUN_AUTOCONF
 	cd $(@D); $(HOST_DIR)/bin/autoconf -f
 endef
 CUPS_PRE_CONFIGURE_HOOKS += CUPS_RUN_AUTOCONF
+HOST_CUPS_PRE_CONFIGURE_HOOKS += CUPS_RUN_AUTOCONF
 
 CUPS_CONF_OPTS = \
 	--without-perl \
@@ -31,6 +38,18 @@ CUPS_DEPENDENCIES = \
 	host-autoconf \
 	host-pkgconf \
 	$(if $(BR2_PACKAGE_ZLIB),zlib)
+HOST_CUPS_DEPENDENCIES = \
+	host-autoconf \
+	host-pkgconf \
+	host-zlib
+HOST_CUPS_CONF_OPTS = \
+	--without-perl \
+	--without-java \
+	--without-php \
+	--disable-gssapi
+# needed for host-zlib
+HOST_CUPS_CONF_ENV = \
+	DSOFLAGS="$(HOST_LDFLAGS) -L$(HOST_DIR)/lib"
 
 ifeq ($(BR2_PACKAGE_SYSTEMD),y)
 CUPS_CONF_OPTS += --with-systemd=/usr/lib/systemd/system \
@@ -83,3 +102,4 @@ CUPS_CONF_OPTS += --disable-avahi
 endif
 
 $(eval $(autotools-package))
+$(eval $(host-autotools-package))
