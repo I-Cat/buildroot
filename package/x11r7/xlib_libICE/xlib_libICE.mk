@@ -13,3 +13,4 @@ XLIB_LIBICE_INSTALL_STAGING = YES
 XLIB_LIBICE_DEPENDENCIES = xlib_xtrans xorgproto host-pkgconf
 
 $(eval $(autotools-package))
+$(eval $(host-autotools-package))
