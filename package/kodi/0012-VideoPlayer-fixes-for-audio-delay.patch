@@ -1,0 +1,184 @@
+From 0e3c95c8ea68906bc5f4ddcf91e9f9d441b1bdcc Mon Sep 17 00:00:00 2001
+From: Rainer Hochecker <fernetmenta@online.de>
+Date: Thu, 21 Sep 2017 11:35:13 +0200
+Subject: [PATCH 1/1] VideoPlayer: fixes for audio delay
+
+Backport of PR 12814
+
+Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
+---
+ xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp    |  7 ++++++-
+ xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.h      |  6 ++++--
+ .../AudioEngine/Engines/ActiveAE/ActiveAEStream.cpp     |  7 ++++++-
+ .../cores/AudioEngine/Engines/ActiveAE/ActiveAEStream.h |  1 +
+ xbmc/cores/AudioEngine/Interfaces/AEStream.h            |  6 ++++++
+ xbmc/cores/VideoPlayer/DVDAudio.cpp                     |  8 ++++++++
+ xbmc/cores/VideoPlayer/DVDAudio.h                       |  3 ++-
+ xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp             | 17 +++++++++++------
+ 8 files changed, 44 insertions(+), 11 deletions(-)
+
+diff --git a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp
+index a1ea0791f4..9c801ada3d 100644
+--- a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp
++++ b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.cpp
+@@ -212,7 +212,12 @@ float CEngineStats::GetCacheTime(CActiveAEStream *stream)
+   return delay;
+ }
+ 
+-float CEngineStats::GetCacheTotal(CActiveAEStream *stream)
++float CEngineStats::GetCacheTotal()
++{
++  return MAX_CACHE_LEVEL;
++}
++
++float CEngineStats::GetMaxDelay()
+ {
+   return MAX_CACHE_LEVEL + m_sinkCacheTotal;
+ }
+diff --git a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.h b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.h
+index e29eb5719a..62333cd402 100644
+--- a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.h
++++ b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAE.h
+@@ -190,7 +190,8 @@ public:
+   void GetDelay(AEDelayStatus& status, CActiveAEStream *stream);
+   void GetSyncInfo(CAESyncInfo& info, CActiveAEStream *stream);
+   float GetCacheTime(CActiveAEStream *stream);
+-  float GetCacheTotal(CActiveAEStream *stream);
++  float GetCacheTotal();
++  float GetMaxDelay();
+   float GetWaterLevel();
+   void SetSuspended(bool state);
+   void SetDSP(bool state);
+@@ -285,7 +286,8 @@ protected:
+   void GetDelay(AEDelayStatus& status, CActiveAEStream *stream) { m_stats.GetDelay(status, stream); }
+   void GetSyncInfo(CAESyncInfo& info, CActiveAEStream *stream) { m_stats.GetSyncInfo(info, stream); }
+   float GetCacheTime(CActiveAEStream *stream) { return m_stats.GetCacheTime(stream); }
+-  float GetCacheTotal(CActiveAEStream *stream) { return m_stats.GetCacheTotal(stream); }
++  float GetCacheTotal() { return m_stats.GetCacheTotal(); }
++  float GetMaxDelay() { return m_stats.GetMaxDelay(); }
+   void FlushStream(CActiveAEStream *stream);
+   void PauseStream(CActiveAEStream *stream, bool pause);
+   void StopSound(CActiveAESound *sound);
+diff --git a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAEStream.cpp b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAEStream.cpp
+index 246d7e6c05..63ef280591 100644
+--- a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAEStream.cpp
++++ b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAEStream.cpp
+@@ -368,7 +368,12 @@ double CActiveAEStream::GetCacheTime()
+ 
+ double CActiveAEStream::GetCacheTotal()
+ {
+-  return AE.GetCacheTotal(this);
++  return AE.GetCacheTotal();
++}
++
++double CActiveAEStream::GetMaxDelay()
++{
++  return AE.GetMaxDelay();
+ }
+ 
+ void CActiveAEStream::Pause()
+diff --git a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAEStream.h b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAEStream.h
+index 531dedc71f..92affa34a1 100644
+--- a/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAEStream.h
++++ b/xbmc/cores/AudioEngine/Engines/ActiveAE/ActiveAEStream.h
+@@ -145,6 +145,7 @@ public:
+   virtual bool IsBuffering();
+   virtual double GetCacheTime();
+   virtual double GetCacheTotal();
++  virtual double GetMaxDelay();
+ 
+   virtual void Pause();
+   virtual void Resume();
+diff --git a/xbmc/cores/AudioEngine/Interfaces/AEStream.h b/xbmc/cores/AudioEngine/Interfaces/AEStream.h
+index 533f6715d4..4cda302df6 100644
+--- a/xbmc/cores/AudioEngine/Interfaces/AEStream.h
++++ b/xbmc/cores/AudioEngine/Interfaces/AEStream.h
+@@ -116,6 +116,12 @@ public:
+   virtual double GetCacheTotal() = 0;
+ 
+   /**
++   * Returns the total time in seconds of maximum delay
++   * @return seconds
++   */
++  virtual double GetMaxDelay() = 0;
++
++  /**
+    * Pauses the stream playback
+    */
+   virtual void Pause() = 0;
+diff --git a/xbmc/cores/VideoPlayer/DVDAudio.cpp b/xbmc/cores/VideoPlayer/DVDAudio.cpp
+index 2dd9b3689a..067896b8fb 100644
+--- a/xbmc/cores/VideoPlayer/DVDAudio.cpp
++++ b/xbmc/cores/VideoPlayer/DVDAudio.cpp
+@@ -278,6 +278,14 @@ double CDVDAudio::GetCacheTotal()
+   return m_pAudioStream->GetCacheTotal();
+ }
+ 
++double CDVDAudio::GetMaxDelay()
++{
++  CSingleLock lock (m_critSection);
++  if (!m_pAudioStream)
++    return 0.0;
++  return m_pAudioStream->GetMaxDelay();
++}
++
+ double CDVDAudio::GetPlayingPts()
+ {
+   if (m_playingPts == DVD_NOPTS_VALUE)
+diff --git a/xbmc/cores/VideoPlayer/DVDAudio.h b/xbmc/cores/VideoPlayer/DVDAudio.h
+index 81882a1a38..f677906bfb 100644
+--- a/xbmc/cores/VideoPlayer/DVDAudio.h
++++ b/xbmc/cores/VideoPlayer/DVDAudio.h
+@@ -56,7 +56,8 @@ public:
+   unsigned int AddPackets(const DVDAudioFrame &audioframe);
+   double GetPlayingPts();
+   double GetCacheTime();
+-  double GetCacheTotal(); // returns total amount the audio device can buffer
++  double GetCacheTotal(); // returns total time a stream can buffer
++  double GetMaxDelay(); // returns total time of audio in AE for the stream
+   double GetDelay(); // returns the time it takes to play a packet if we add one at this time
+   double GetSyncError();
+   void SetSyncErrorCorrection(double correction);
+diff --git a/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp b/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
+index ec5f91443f..bbec5a4660 100644
+--- a/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
++++ b/xbmc/cores/VideoPlayer/VideoPlayerAudio.cpp
+@@ -290,7 +290,12 @@ void CVideoPlayerAudio::Process()
+       double pts = static_cast<CDVDMsgDouble*>(pMsg)->m_value;
+       CLog::Log(LOGDEBUG, "CVideoPlayerAudio - CDVDMsg::GENERAL_RESYNC(%f)", pts);
+ 
+-      m_audioClock = pts + m_dvdAudio.GetDelay();
++      double delay = m_dvdAudio.GetDelay();
++      if (pts > m_audioClock - delay + 0.5 * DVD_TIME_BASE)
++      {
++        m_dvdAudio.Flush();
++      }
++      m_audioClock = pts + delay;
+       if (m_speed != DVD_PLAYSPEED_PAUSE)
+         m_dvdAudio.Resume();
+       m_syncState = IDVDStreamPlayer::SYNC_INSYNC;
+@@ -458,16 +463,16 @@ void CVideoPlayerAudio::Process()
+           // signal to our parent that we have initialized
+           if(m_syncState == IDVDStreamPlayer::SYNC_STARTING)
+           {
+-            double cachetotal = DVD_SEC_TO_TIME(m_dvdAudio.GetCacheTotal());
+-            double cachetime = m_dvdAudio.GetDelay();
+-            if (cachetime >= cachetotal * 0.5)
++            double cachetotal = m_dvdAudio.GetCacheTotal();
++            double cachetime = m_dvdAudio.GetCacheTime();
++            if (cachetime >= cachetotal * 0.75)
+             {
+               m_syncState = IDVDStreamPlayer::SYNC_WAITSYNC;
+               m_stalled = false;
+               SStartMsg msg;
+               msg.player = VideoPlayer_AUDIO;
+-              msg.cachetotal = cachetotal;
+-              msg.cachetime = cachetime;
++              msg.cachetotal = m_dvdAudio.GetMaxDelay() * DVD_TIME_BASE;
++              msg.cachetime = m_dvdAudio.GetDelay();
+               msg.timestamp = audioframe.hasTimestamp ? audioframe.pts : DVD_NOPTS_VALUE;
+               m_messageParent.Put(new CDVDMsgType<SStartMsg>(CDVDMsg::PLAYER_STARTED, msg));
+ 
+-- 
+2.11.0
+
