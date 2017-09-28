@@ -1,0 +1,528 @@
+From b9ce9ccc9892f44e2335d093be3071bdfd541f83 Mon Sep 17 00:00:00 2001
+From: Kai Sommerfeld <kai.sommerfeld@gmx.com>
+Date: Thu, 28 Sep 2017 20:34:45 +0200
+Subject: [PATCH] [PVR] Make PVR database threadsafe.
+
+Backport of upstream PR 12844
+
+Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
+---
+ xbmc/dbwrappers/Database.h                    |   2 +-
+ xbmc/pvr/PVRDatabase.cpp                      | 131 +++++++++++++++++---------
+ xbmc/pvr/PVRDatabase.h                        |  14 ++-
+ xbmc/pvr/PVRManager.cpp                       |   2 +-
+ xbmc/pvr/channels/PVRChannel.cpp              |   2 +-
+ xbmc/pvr/channels/PVRChannelGroup.cpp         |  13 +--
+ xbmc/pvr/channels/PVRChannelGroupInternal.cpp |  10 +-
+ 7 files changed, 106 insertions(+), 68 deletions(-)
+
+diff --git a/xbmc/dbwrappers/Database.h b/xbmc/dbwrappers/Database.h
+index 593a8eac47..23e9e29b47 100644
+--- a/xbmc/dbwrappers/Database.h
++++ b/xbmc/dbwrappers/Database.h
+@@ -76,7 +76,7 @@ public:
+   CDatabase(void);
+   virtual ~CDatabase(void);
+   bool IsOpen();
+-  void Close();
++  virtual void Close();
+   bool Compress(bool bForce=true);
+   void Interupt();
+ 
+diff --git a/xbmc/pvr/PVRDatabase.cpp b/xbmc/pvr/PVRDatabase.cpp
+index 43bd474b62..232fe698ab 100644
+--- a/xbmc/pvr/PVRDatabase.cpp
++++ b/xbmc/pvr/PVRDatabase.cpp
+@@ -39,11 +39,20 @@ using namespace ADDON;
+ 
+ bool CPVRDatabase::Open()
+ {
++  CSingleLock lock(m_critSection);
+   return CDatabase::Open(g_advancedSettings.m_databaseTV);
+ }
+ 
++void CPVRDatabase::Close()
++{
++  CSingleLock lock(m_critSection);
++  CDatabase::Close();
++}
++
+ void CPVRDatabase::CreateTables()
+ {
++  CSingleLock lock(m_critSection);
++
+   CLog::Log(LOGINFO, "PVR - %s - creating tables", __FUNCTION__);
+ 
+   CLog::Log(LOGDEBUG, "PVR - %s - creating table 'channels'", __FUNCTION__);
+@@ -96,6 +105,8 @@ void CPVRDatabase::CreateTables()
+ 
+ void CPVRDatabase::CreateAnalytics()
+ {
++  CSingleLock lock(m_critSection);
++
+   CLog::Log(LOGINFO, "%s - creating indices", __FUNCTION__);
+   m_pDS->exec("CREATE UNIQUE INDEX idx_channels_iClientId_iUniqueId on channels(iClientId, iUniqueId);");
+   m_pDS->exec("CREATE INDEX idx_channelgroups_bIsRadio on channelgroups(bIsRadio);");
+@@ -104,6 +115,8 @@ void CPVRDatabase::CreateAnalytics()
+ 
+ void CPVRDatabase::UpdateTables(int iVersion)
+ {
++  CSingleLock lock(m_critSection);
++
+   if (iVersion < 13)
+     m_pDS->exec("ALTER TABLE channels ADD idEpg integer;");
+ 
+@@ -150,6 +163,8 @@ void CPVRDatabase::UpdateTables(int iVersion)
+ bool CPVRDatabase::DeleteChannels(void)
+ {
+   CLog::Log(LOGDEBUG, "PVR - %s - deleting all channels from the database", __FUNCTION__);
++
++  CSingleLock lock(m_critSection);
+   return DeleteValues("channels");
+ }
+ 
+@@ -164,12 +179,14 @@ bool CPVRDatabase::Delete(const CPVRChannel &channel)
+   Filter filter;
+   filter.AppendWhere(PrepareSQL("idChannel = %u", channel.ChannelID()));
+ 
++  CSingleLock lock(m_critSection);
+   return DeleteValues("channels", filter);
+ }
+ 
+-int CPVRDatabase::Get(CPVRChannelGroupInternal &results)
++int CPVRDatabase::Get(CPVRChannelGroupInternal &results, bool bCompressDB)
+ {
+   int iReturn(0);
++  bool bIgnoreEpgDB = CSettings::GetInstance().GetBool(CSettings::SETTING_EPG_IGNOREDBFORCLIENT);
+ 
+   std::string strQuery = PrepareSQL("SELECT channels.idChannel, channels.iUniqueId, channels.bIsRadio, channels.bIsHidden, channels.bIsUserSetIcon, channels.bIsUserSetName, "
+       "channels.sIconPath, channels.sChannelName, channels.bIsVirtual, channels.bEPGEnabled, channels.sEPGScraper, channels.iLastWatched, channels.iClientId, channels.bIsLocked, "
+@@ -177,11 +194,12 @@ int CPVRDatabase::Get(CPVRChannelGroupInternal &results)
+       "FROM map_channelgroups_channels "
+       "LEFT JOIN channels ON channels.idChannel = map_channelgroups_channels.idChannel "
+       "WHERE map_channelgroups_channels.idGroup = %u", results.GroupID());
++
++  CSingleLock lock(m_critSection);
+   if (ResultQuery(strQuery))
+   {
+     try
+     {
+-      bool bIgnoreEpgDB = CSettings::GetInstance().GetBool(CSettings::SETTING_EPG_IGNOREDBFORCLIENT);
+       while (!m_pDS->eof())
+       {
+         CPVRChannelPtr channel = CPVRChannelPtr(new CPVRChannel());
+@@ -228,6 +246,10 @@ int CPVRDatabase::Get(CPVRChannelGroupInternal &results)
+   }
+ 
+   m_pDS->close();
++
++  if (iReturn > 0 && bCompressDB)
++    Compress(true);
++
+   return iReturn;
+ }
+ 
+@@ -238,6 +260,7 @@ bool CPVRDatabase::RemoveChannelsFromGroup(const CPVRChannelGroup &group)
+   Filter filter;
+   filter.AppendWhere(PrepareSQL("idGroup = %u", group.GroupID()));
+ 
++  CSingleLock lock(m_critSection);
+   return DeleteValues("map_channelgroups_channels", filter);
+ }
+ 
+@@ -251,6 +274,8 @@ bool CPVRDatabase::GetCurrentGroupMembers(const CPVRChannelGroup &group, std::ve
+     return false;
+   }
+ 
++  CSingleLock lock(m_critSection);
++
+   std::string strCurrentMembersQuery = PrepareSQL("SELECT idChannel FROM map_channelgroups_channels WHERE idGroup = %u", group.GroupID());
+   if (ResultQuery(strCurrentMembersQuery))
+   {
+@@ -288,6 +313,8 @@ bool CPVRDatabase::DeleteChannelsFromGroup(const CPVRChannelGroup &group, const
+     return false;
+   }
+ 
++  CSingleLock lock(m_critSection);
++
+   while (iDeletedChannels < channelsToDelete.size())
+   {
+     std::string strChannelsToDelete;
+@@ -322,6 +349,8 @@ bool CPVRDatabase::RemoveStaleChannelsFromGroup(const CPVRChannelGroup &group)
+     return false;
+   }
+ 
++  CSingleLock lock(m_critSection);
++
+   if (!group.IsInternalGroup())
+   {
+     /* First remove channels that don't exist in the main channels table */
+@@ -372,8 +401,8 @@ bool CPVRDatabase::DeleteChannelGroups(void)
+ {
+   CLog::Log(LOGDEBUG, "PVR - %s - deleting all channel groups from the database", __FUNCTION__);
+ 
+-  return DeleteValues("channelgroups") &&
+-      DeleteValues("map_channelgroups_channels");
++  CSingleLock lock(m_critSection);
++  return DeleteValues("channelgroups") && DeleteValues("map_channelgroups_channels");
+ }
+ 
+ bool CPVRDatabase::Delete(const CPVRChannelGroup &group)
+@@ -389,15 +418,16 @@ bool CPVRDatabase::Delete(const CPVRChannelGroup &group)
+   filter.AppendWhere(PrepareSQL("idGroup = %u", group.GroupID()));
+   filter.AppendWhere(PrepareSQL("bIsRadio = %u", group.IsRadio()));
+ 
+-  return RemoveChannelsFromGroup(group) &&
+-      DeleteValues("channelgroups", filter);
++  CSingleLock lock(m_critSection);
++  return RemoveChannelsFromGroup(group) && DeleteValues("channelgroups", filter);
+ }
+ 
+ bool CPVRDatabase::Get(CPVRChannelGroups &results)
+ {
+   bool bReturn = false;
+-  std::string strQuery = PrepareSQL("SELECT * from channelgroups WHERE bIsRadio = %u", results.IsRadio());
++  CSingleLock lock(m_critSection);
+ 
++  std::string strQuery = PrepareSQL("SELECT * from channelgroups WHERE bIsRadio = %u", results.IsRadio());
+   if (ResultQuery(strQuery))
+   {
+     try
+@@ -437,46 +467,50 @@ int CPVRDatabase::Get(CPVRChannelGroup &group)
+     return -1;
+   }
+ 
+-  std::string strQuery = PrepareSQL("SELECT idChannel, iChannelNumber FROM map_channelgroups_channels WHERE idGroup = %u ORDER BY iChannelNumber", group.GroupID());
+-  if (ResultQuery(strQuery))
++  const CPVRChannelGroupPtr allGroup = g_PVRManager.ChannelGroups()->GetGroupAll(group.IsRadio());
+   {
+-    iReturn = 0;
++    CSingleLock lock(m_critSection);
+ 
+-    try
++    std::string strQuery = PrepareSQL("SELECT idChannel, iChannelNumber FROM map_channelgroups_channels WHERE idGroup = %u ORDER BY iChannelNumber", group.GroupID());
++    if (ResultQuery(strQuery))
+     {
+-      while (!m_pDS->eof())
++      iReturn = 0;
++      try
+       {
+-        int iChannelId = m_pDS->fv("idChannel").get_asInt();
+-        int iChannelNumber = m_pDS->fv("iChannelNumber").get_asInt();
+-        CPVRChannelPtr channel = g_PVRChannelGroups->GetGroupAll(group.IsRadio())->GetByChannelID(iChannelId);
+-
+-        if (channel)
++        while (!m_pDS->eof())
+         {
++          int iChannelId = m_pDS->fv("idChannel").get_asInt();
++          int iChannelNumber = m_pDS->fv("iChannelNumber").get_asInt();
++          CPVRChannelPtr channel = allGroup->GetByChannelID(iChannelId);
++
++          if (channel)
++          {
+ #if PVRDB_DEBUGGING
+-          CLog::Log(LOGDEBUG, "PVR - %s - channel '%s' loaded from the database", __FUNCTION__, channel->m_strChannelName.c_str());
++            CLog::Log(LOGDEBUG, "PVR - %s - channel '%s' loaded from the database", __FUNCTION__, channel->m_strChannelName.c_str());
+ #endif
+-          PVRChannelGroupMember newMember = { channel, (unsigned int)iChannelNumber };
+-          group.m_sortedMembers.push_back(newMember);
+-          group.m_members.insert(std::make_pair(channel->StorageId(), newMember));
+-          ++iReturn;
+-        }
+-        else
+-        {
+-          // remove a channel that doesn't exist (anymore) from the table
+-          Filter filter;
+-          filter.AppendWhere(PrepareSQL("idGroup = %u", group.GroupID()));
+-          filter.AppendWhere(PrepareSQL("idChannel = %u", iChannelId));
+-
+-          DeleteValues("map_channelgroups_channels", filter);
++            PVRChannelGroupMember newMember = { channel, (unsigned int)iChannelNumber };
++            group.m_sortedMembers.push_back(newMember);
++            group.m_members.insert(std::make_pair(channel->StorageId(), newMember));
++            ++iReturn;
++          }
++          else
++          {
++            // remove a channel that doesn't exist (anymore) from the table
++            Filter filter;
++            filter.AppendWhere(PrepareSQL("idGroup = %u", group.GroupID()));
++            filter.AppendWhere(PrepareSQL("idChannel = %u", iChannelId));
++
++            DeleteValues("map_channelgroups_channels", filter);
++          }
++
++          m_pDS->next();
+         }
+-
+-        m_pDS->next();
++        m_pDS->close();
++      }
++      catch(...)
++      {
++        CLog::Log(LOGERROR, "PVR - %s - failed to get channels", __FUNCTION__);
+       }
+-      m_pDS->close();
+-    }
+-    catch(...)
+-    {
+-      CLog::Log(LOGERROR, "PVR - %s - failed to get channels", __FUNCTION__);
+     }
+   }
+ 
+@@ -494,7 +528,7 @@ bool CPVRDatabase::PersistChannels(CPVRChannelGroup &group)
+   {
+     if (it->second.channel->IsChanged() || it->second.channel->IsNew())
+     {
+-      if (Persist(*it->second.channel))
++      if (Persist(*it->second.channel, false))
+       {
+         it->second.channel->Persisted();
+         bReturn = true;
+@@ -544,7 +578,6 @@ bool CPVRDatabase::PersistGroupMembers(const CPVRChannelGroup &group)
+         QueueInsertQuery(strQuery);
+       }
+     }
+-    lock.Leave();
+ 
+     bReturn = CommitInsertQueries();
+     bRemoveChannels = RemoveStaleChannelsFromGroup(group);
+@@ -557,6 +590,7 @@ bool CPVRDatabase::PersistGroupMembers(const CPVRChannelGroup &group)
+ 
+ bool CPVRDatabase::ResetEPG(void)
+ {
++  CSingleLock lock(m_critSection);
+   std::string strQuery = PrepareSQL("UPDATE channels SET idEpg = 0");
+   return ExecuteQuery(strQuery);
+ }
+@@ -572,9 +606,8 @@ bool CPVRDatabase::Persist(CPVRChannelGroup &group)
+ 
+   std::string strQuery;
+   bReturn = true;
++  CSingleLock lock(m_critSection);
+   {
+-    CSingleLock lock(group.m_critSection);
+-
+     /* insert a new entry when this is a new group, or replace the existing one otherwise */
+     if (group.GroupID() <= 0)
+       strQuery = PrepareSQL("INSERT INTO channelgroups (bIsRadio, iGroupType, sName, iLastWatched, bIsHidden, iPosition) VALUES (%i, %i, '%s', %u, %i, %i)",
+@@ -587,7 +620,10 @@ bool CPVRDatabase::Persist(CPVRChannelGroup &group)
+ 
+     /* set the group id if it was <= 0 */
+     if (bReturn && group.GroupID() <= 0)
++    {
++      CSingleLock lock(group.m_critSection);
+       group.m_iGroupId = (int) m_pDS->lastinsertid();
++    }
+   }
+ 
+   /* only persist the channel data for the internal groups */
+@@ -601,7 +637,7 @@ bool CPVRDatabase::Persist(CPVRChannelGroup &group)
+   return bReturn;
+ }
+ 
+-bool CPVRDatabase::Persist(CPVRChannel &channel)
++bool CPVRDatabase::Persist(CPVRChannel &channel, bool bCommit)
+ {
+   bool bReturn(false);
+ 
+@@ -613,6 +649,8 @@ bool CPVRDatabase::Persist(CPVRChannel &channel)
+   }
+ 
+   std::string strQuery;
++  CSingleLock lock(m_critSection);
++
+   if (channel.ChannelID() <= 0)
+   {
+     /* new channel */
+@@ -646,6 +684,9 @@ bool CPVRDatabase::Persist(CPVRChannel &channel)
+       channel.SetChannelID((int)m_pDS->lastinsertid());
+ 
+     bReturn = true;
++
++    if (bCommit)
++      bReturn = CommitInsertQueries();
+   }
+ 
+   return bReturn;
+@@ -653,16 +694,16 @@ bool CPVRDatabase::Persist(CPVRChannel &channel)
+ 
+ bool CPVRDatabase::UpdateLastWatched(const CPVRChannel &channel)
+ {
++  CSingleLock lock(m_critSection);
+   std::string strQuery = PrepareSQL("UPDATE channels SET iLastWatched = %d WHERE idChannel = %d",
+     channel.LastWatched(), channel.ChannelID());
+-
+   return ExecuteQuery(strQuery);
+ }
+ 
+ bool CPVRDatabase::UpdateLastWatched(const CPVRChannelGroup &group)
+ {
++  CSingleLock lock(m_critSection);
+   std::string strQuery = PrepareSQL("UPDATE channelgroups SET iLastWatched = %d WHERE idGroup = %d",
+     group.LastWatched(), group.GroupID());
+-
+   return ExecuteQuery(strQuery);
+ }
+diff --git a/xbmc/pvr/PVRDatabase.h b/xbmc/pvr/PVRDatabase.h
+index 11be7b469e..d242eb2954 100644
+--- a/xbmc/pvr/PVRDatabase.h
++++ b/xbmc/pvr/PVRDatabase.h
+@@ -22,6 +22,7 @@
+ #include <vector>
+ 
+ #include "dbwrappers/Database.h"
++#include "threads/CriticalSection.h"
+ #include "utils/log.h"
+ 
+ #include "pvr/PVRManager.h"
+@@ -53,6 +54,11 @@ namespace PVR
+     virtual bool Open();
+ 
+     /*!
++     * @brief Close the database.
++     */
++    void Close() override;
++
++    /*!
+      * @brief Get the minimal database version that is required to operate correctly.
+      * @return The minimal database version.
+      */
+@@ -76,9 +82,10 @@ namespace PVR
+     /*!
+      * @brief Add or update a channel entry in the database
+      * @param channel The channel to persist.
++     * @param bCommit queue only or queue and commit
+      * @return True when persisted or queued, false otherwise.
+      */
+-    bool Persist(CPVRChannel &channel);
++    bool Persist(CPVRChannel &channel, bool bCommit);
+ 
+     /*!
+      * @brief Remove a channel entry from the database
+@@ -90,9 +97,10 @@ namespace PVR
+     /*!
+      * @brief Get the list of channels from the database
+      * @param results The channel group to store the results in.
++     * @param bCompressDB Compress the DB after getting the list
+      * @return The amount of channels that were added.
+      */
+-    int Get(CPVRChannelGroupInternal &results);
++    int Get(CPVRChannelGroupInternal &results, bool bCompressDB);
+ 
+     //@}
+ 
+@@ -183,5 +191,7 @@ namespace PVR
+     bool PersistChannels(CPVRChannelGroup &group);
+ 
+     bool RemoveChannelsFromGroup(const CPVRChannelGroup &group);
++
++    CCriticalSection m_critSection;
+   };
+ }
+diff --git a/xbmc/pvr/PVRManager.cpp b/xbmc/pvr/PVRManager.cpp
+index 18f8fbdd32..4e3e1d99b4 100644
+--- a/xbmc/pvr/PVRManager.cpp
++++ b/xbmc/pvr/PVRManager.cpp
+@@ -474,7 +474,7 @@ void CPVRManager::Stop(void)
+ 
+   /* close database */
+   const CPVRDatabasePtr database(GetTVDatabase());
+-  if (database && database->IsOpen())
++  if (database)
+     database->Close();
+ 
+   SetState(ManagerStateStopped);
+diff --git a/xbmc/pvr/channels/PVRChannel.cpp b/xbmc/pvr/channels/PVRChannel.cpp
+index 8eee72284e..f8bfa94a0d 100644
+--- a/xbmc/pvr/channels/PVRChannel.cpp
++++ b/xbmc/pvr/channels/PVRChannel.cpp
+@@ -221,7 +221,7 @@ bool CPVRChannel::Persist()
+   const CPVRDatabasePtr database(g_PVRManager.GetTVDatabase());
+   if (database)
+   {
+-    bool bReturn = database->Persist(*this) && database->CommitInsertQueries();
++    bool bReturn = database->Persist(*this, true);
+     CSingleLock lock(m_critSection);
+     m_bChanged = !bReturn;
+     return bReturn;
+diff --git a/xbmc/pvr/channels/PVRChannelGroup.cpp b/xbmc/pvr/channels/PVRChannelGroup.cpp
+index dea561a834..a5abaf923f 100644
+--- a/xbmc/pvr/channels/PVRChannelGroup.cpp
++++ b/xbmc/pvr/channels/PVRChannelGroup.cpp
+@@ -702,10 +702,6 @@ bool CPVRChannelGroup::UpdateGroupEntries(const CPVRChannelGroup &channels)
+   bool bChanged(false);
+   bool bRemoved(false);
+ 
+-  const CPVRDatabasePtr database(g_PVRManager.GetTVDatabase());
+-  if (!database)
+-    return bReturn;
+-
+   CSingleLock lock(m_critSection);
+   /* sort by client channel number if this is the first time or if pvrmanager.backendchannelorder is true */
+   bool bUseBackendChannelNumbers(m_members.empty() || m_bUsingBackendChannelOrder);
+@@ -719,12 +715,12 @@ bool CPVRChannelGroup::UpdateGroupEntries(const CPVRChannelGroup &channels)
+        new channels were added at the back, so they'll get the highest numbers */
+     bool bRenumbered = SortAndRenumber();
+ 
++    bReturn = Persist();
++
+     SetChanged();
+-    lock.Leave();
+ 
++    lock.Leave();
+     NotifyObservers(HasNewChannels() || bRemoved || bRenumbered ? ObservableMessageChannelGroupReset : ObservableMessageChannelGroup);
+-
+-    bReturn = Persist();
+   }
+   else
+   {
+@@ -857,7 +853,6 @@ bool CPVRChannelGroup::Persist(void)
+     CLog::Log(LOGDEBUG, "CPVRChannelGroup - %s - persisting channel group '%s' with %d channels",
+         __FUNCTION__, GroupName().c_str(), (int) m_members.size());
+     m_bChanged = false;
+-    lock.Leave();
+ 
+     bReturn = database->Persist(*this);
+   }
+@@ -983,7 +978,6 @@ void CPVRChannelGroup::OnSettingChanged(const CSetting *setting)
+ 
+     m_bUsingBackendChannelOrder   = bUsingBackendChannelOrder;
+     m_bUsingBackendChannelNumbers = bUsingBackendChannelNumbers;
+-    lock.Leave();
+ 
+     /* check whether this channel group has to be renumbered */
+     if (bChannelOrderChanged || bChannelNumbersChanged)
+@@ -1150,7 +1144,6 @@ bool CPVRChannelGroup::SetLastWatched(time_t iLastWatched)
+   if (m_iLastWatched != iLastWatched)
+   {
+     m_iLastWatched = iLastWatched;
+-    lock.Leave();
+ 
+     /* update the database immediately */
+     if (database)
+diff --git a/xbmc/pvr/channels/PVRChannelGroupInternal.cpp b/xbmc/pvr/channels/PVRChannelGroupInternal.cpp
+index 074a6f5af5..1a34397b1e 100644
+--- a/xbmc/pvr/channels/PVRChannelGroupInternal.cpp
++++ b/xbmc/pvr/channels/PVRChannelGroupInternal.cpp
+@@ -226,15 +226,9 @@ int CPVRChannelGroupInternal::LoadFromDb(bool bCompress /* = false */)
+ 
+   int iChannelCount = Size();
+ 
+-  if (database->Get(*this) > 0)
++  if (database->Get(*this, bCompress) == 0)
+   {
+-    if (bCompress)
+-      database->Compress(true);
+-  }
+-  else
+-  {
+-    CLog::Log(LOGINFO, "PVRChannelGroupInternal - %s - no channels in the database",
+-        __FUNCTION__);
++    CLog::Log(LOGINFO, "PVRChannelGroupInternal - %s - no channels in the database", __FUNCTION__);
+   }
+ 
+   SortByChannelNumber();
+-- 
+2.11.0
+
