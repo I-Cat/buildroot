@@ -1,0 +1,8 @@
+config BR2_PACKAGE_OPENJDK
+	bool "host openjdk"
+	select BR2_PACKAGE_HOST_OPENJDK_BOOTSTRAP
+	help
+	  OpenJDK (Open Java Development Kit) is a free and open source
+	  implementation of the Java Platform, Standard Edition
+
+	  http://openjdk.java.net
