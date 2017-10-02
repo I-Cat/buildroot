@@ -1,0 +1,40 @@
+From 1f4a321ef2700b06316b10fd7fae2e2810c6c671 Mon Sep 17 00:00:00 2001
+From: fritsch <Peter.Fruehberger@gmail.com>
+Date: Mon, 2 Oct 2017 18:24:20 +0200
+Subject: [PATCH] AESinkPULSE: Allow pulseaudio 11 new option
+ remixing-use-all-sink-channels = no
+
+Downloaded from upstream PR 12874.
+
+Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
+---
+ xbmc/cores/AudioEngine/Sinks/AESinkPULSE.cpp | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/xbmc/cores/AudioEngine/Sinks/AESinkPULSE.cpp b/xbmc/cores/AudioEngine/Sinks/AESinkPULSE.cpp
+index 69bee048f45e..82897266fdbc 100644
+--- a/xbmc/cores/AudioEngine/Sinks/AESinkPULSE.cpp
++++ b/xbmc/cores/AudioEngine/Sinks/AESinkPULSE.cpp
+@@ -570,6 +570,14 @@ bool CAESinkPULSE::Initialize(AEAudioFormat &format, std::string &device)
+   }
+   else
+   {
++    // version 11 got the new option "remixing-use-all-sink-channels" which
++    // can be set to "no". Therefore we give the choice back to user and let
++    // him configure the soundserver the way he likes - this makes the pre 11
++    // workaround obsolete
++#if PA_CHECK_VERSION(11,0,0)
++    use_pa_mixing = true;
++    map = AEChannelMapToPAChannel(format.m_channelLayout);
++#else
+     // as we mix for PA now to avoid default upmixing, we need to care for
+     // channel resolving
+     CAEChannelInfo target_layout = format.m_channelLayout;
+@@ -587,6 +595,7 @@ bool CAESinkPULSE::Initialize(AEAudioFormat &format, std::string &device)
+       // use our layout to update AE
+       map = AEChannelMapToPAChannel(target_layout);
+     }
++#endif
+     format.m_channelLayout = PAChannelToAEChannelMap(map);
+   }
+   m_Channels = format.m_channelLayout.Count();
