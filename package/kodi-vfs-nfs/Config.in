@@ -1,0 +1,13 @@
+config BR2_PACKAGE_KODI_VFS_NFS
+	bool "kodi-vfs-nfs"
+	# libnfs -> libtirpc
+	depends on BR2_TOOLCHAIN_HAS_NATIVE_RPC || BR2_TOOLCHAIN_HAS_THREADS
+	select BR2_PACKAGE_LIBNFS
+	select BR2_PACKAGE_LIBPLATFORM
+	help
+	  NFS VFS addon for Kodi
+
+	  https://github.com/notspiff/vfs.nfs
+
+comment "kodi-vfs-nfs needs a toolchain w/ threads support"
+	depends on !(BR2_TOOLCHAIN_HAS_THREADS || BR2_TOOLCHAIN_HAS_NATIVE_RPC)
