@@ -1,0 +1,53 @@
+Fix build with uclicb which has no execinfo
+
+Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
+
+diff -uNr vdr-2.3.8.org/thread.c vdr-2.3.8/thread.c
+--- vdr-2.3.8.org/thread.c	2017-06-25 14:08:16.000000000 +0200
++++ vdr-2.3.8/thread.c	2017-10-31 19:43:20.000000000 +0100
+@@ -11,7 +11,7 @@
+ #include <cxxabi.h>
+ #include <dlfcn.h>
+ #include <errno.h>
+-#include <execinfo.h>
++//#include <execinfo.h>
+ #include <linux/unistd.h>
+ #include <malloc.h>
+ #include <stdarg.h>
+@@ -24,7 +24,7 @@
+ #include <unistd.h>
+ #include "tools.h"
+ 
+-#define ABORT { dsyslog("ABORT!"); cBackTrace::BackTrace(); abort(); }
++#define ABORT { dsyslog("ABORT!"); abort(); }
+ 
+ //#define DEBUG_LOCKING  // uncomment this line to activate debug output for locking
+ #define DEBUG_LOCKSEQ  // uncomment this line to activate debug output for invalid locking sequence
+@@ -434,6 +434,7 @@
+   return false;
+ }
+ 
++/*
+ // --- cBackTrace ------------------------------------------------------------
+ 
+ #define BT_BUF_SIZE 100
+@@ -552,7 +553,7 @@
+      }
+   return Caller;
+ }
+-
++*/
+ // --- cStateLockLog ---------------------------------------------------------
+ 
+ #ifdef DEBUG_LOCKSEQ
+@@ -631,8 +632,8 @@
+          logIndex = 0;
+       }
+   dsyslog("%5d invalid lock sequence: %s", ThreadId, Name);
+-  dsyslog("full backtrace:");
+-  cBackTrace::BackTrace(NULL, 2);
++//  dsyslog("full backtrace:");
++//  cBackTrace::BackTrace(NULL, 2);
+   dsyslog("--- end invalid lock sequence report");
+   dsyslog("--- THERE WILL BE NO FURTHER REPORTS UNTIL VDR IS RESTARTED!");
+   fprintf(stderr, "invalid lock sequence at %s\n", *DayDateTime(time(NULL)));
