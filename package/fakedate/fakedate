@@ -43,7 +43,6 @@ if [ -n "$SOURCE_DATE_EPOCH" ]; then
         fi
     done
     if [ $FORCE_EPOCH -eq 1 ]; then
-        echo "date: Warning: using \$SOURCE_DATE_EPOCH instead of true time" >&2
         ARGS="-d @$SOURCE_DATE_EPOCH"
     fi
 fi
