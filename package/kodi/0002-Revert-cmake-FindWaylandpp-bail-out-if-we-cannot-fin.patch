@@ -1,0 +1,41 @@
+From 99bc697c3849f3a093fcf6673f48d0ea3eeb3bf0 Mon Sep 17 00:00:00 2001
+From: Bernd Kuhls <bernd.kuhls@t-online.de>
+Date: Sun, 1 Nov 2020 18:05:00 +0100
+Subject: [PATCH] Revert "[cmake] FindWaylandpp: bail out if we cannot find
+ waylandpp via pkg-config"
+
+This reverts commit 767ff84dd222ff19996889942abf239d93fd940b.
+
+Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
+---
+ cmake/modules/FindWaylandpp.cmake | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/cmake/modules/FindWaylandpp.cmake b/cmake/modules/FindWaylandpp.cmake
+index ba229d7ffc..3cfc282730 100644
+--- a/cmake/modules/FindWaylandpp.cmake
++++ b/cmake/modules/FindWaylandpp.cmake
+@@ -11,19 +11,12 @@
+ # WAYLANDPP_SCANNER      - path to wayland-scanner++
+ 
+ pkg_check_modules(PC_WAYLANDPP wayland-client++ wayland-egl++ wayland-cursor++ QUIET)
+-
++pkg_check_modules(PC_WAYLANDPP_SCANNER wayland-scanner++ QUIET)
+ if(PC_WAYLANDPP_FOUND)
+   pkg_get_variable(PC_WAYLANDPP_PKGDATADIR wayland-client++ pkgdatadir)
+-else()
+-  message(SEND_ERROR "wayland-client++ not found via pkg-config")
+ endif()
+-
+-pkg_check_modules(PC_WAYLANDPP_SCANNER wayland-scanner++ QUIET)
+-
+ if(PC_WAYLANDPP_SCANNER_FOUND)
+   pkg_get_variable(PC_WAYLANDPP_SCANNER wayland-scanner++ wayland_scannerpp)
+-else()
+-  message(SEND_ERROR "wayland-scanner++ not found via pkg-config")
+ endif()
+ 
+ find_path(WAYLANDPP_INCLUDE_DIR wayland-client.hpp PATHS ${PC_WAYLANDPP_INCLUDEDIR})
+-- 
+2.27.0
+
