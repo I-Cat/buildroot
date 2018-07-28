@@ -1,0 +1,62 @@
+Fix build on openrisc
+
+Patch for master branch sent upstream as PR 14236.
+This patch is a backport to Krypton branch.
+
+Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
+
+diff -uNr xbmc-17.6-Krypton.org/xbmc/cores/DllLoader/DllLoader.h xbmc-17.6-Krypton/xbmc/cores/DllLoader/DllLoader.h
+--- xbmc-17.6-Krypton.org/xbmc/cores/DllLoader/DllLoader.h	2017-11-14 17:55:01.000000000 +0100
++++ xbmc-17.6-Krypton/xbmc/cores/DllLoader/DllLoader.h	2018-07-28 12:24:36.686332911 +0200
+@@ -31,6 +31,7 @@
+     !defined(__SH4__) && \
+     !defined(__sparc__) && \
+     !defined(__arc__) && \
++    !defined(__or1k__) && \
+     !defined(__xtensa__)
+ #define USE_LDT_KEEPER
+ #include "ldt_keeper.h"
+diff -uNr xbmc-17.6-Krypton.org/xbmc/cores/DllLoader/ldt_keeper.c xbmc-17.6-Krypton/xbmc/cores/DllLoader/ldt_keeper.c
+--- xbmc-17.6-Krypton.org/xbmc/cores/DllLoader/ldt_keeper.c	2017-11-14 17:55:01.000000000 +0100
++++ xbmc-17.6-Krypton/xbmc/cores/DllLoader/ldt_keeper.c	2018-07-28 12:17:18.052505833 +0200
+@@ -27,6 +27,7 @@
+     !defined(__SH4__) && \
+     !defined(__sparc__) && \
+     !defined(__arc__) && \
++    !defined(__or1k__) && \
+     !defined(__xtensa__)
+ 
+ #include "ldt_keeper.h"
+diff -uNr xbmc-17.6-Krypton.org/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGL.h xbmc-17.6-Krypton/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGL.h
+--- xbmc-17.6-Krypton.org/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGL.h	2017-11-14 17:55:01.000000000 +0100
++++ xbmc-17.6-Krypton/xbmc/cores/VideoPlayer/VideoRenderers/LinuxRendererGL.h	2018-07-28 12:24:13.573134108 +0200
+@@ -302,6 +302,7 @@
+     !defined(__SH4__) && \
+     !defined(__sparc__) && \
+     !defined(__arc__) && \
++    !defined(__or1k__) && \
+     !defined(__xtensa__)
+   // If there are any issues compiling this, just append a ' && 0'
+   // to the above to make it '#if defined(TARGET_POSIX) && 0'
+diff -uNr xbmc-17.6-Krypton.org/xbmc/threads/Atomics.cpp xbmc-17.6-Krypton/xbmc/threads/Atomics.cpp
+--- xbmc-17.6-Krypton.org/xbmc/threads/Atomics.cpp	2017-11-14 17:55:01.000000000 +0100
++++ xbmc-17.6-Krypton/xbmc/threads/Atomics.cpp	2018-07-28 12:25:57.176022980 +0200
+@@ -113,6 +113,7 @@
+     defined(__SH4__) || \
+     defined(__sparc__) || \
+     defined(__arc__) || \
++    defined(__or1k__) || \
+     defined(__xtensa__)
+ // Not available/required
+ // Hack to allow compilation
+diff -uNr xbmc-17.6-Krypton.org/xbmc/utils/MathUtils.h xbmc-17.6-Krypton/xbmc/utils/MathUtils.h
+--- xbmc-17.6-Krypton.org/xbmc/utils/MathUtils.h	2017-11-14 17:55:01.000000000 +0100
++++ xbmc-17.6-Krypton/xbmc/utils/MathUtils.h	2018-07-28 12:10:22.595053280 +0200
+@@ -40,6 +40,7 @@
+     defined(__SH4__) || \
+     defined(__sparc__) || \
+     defined(__arc__) || \
++    defined(__or1k__) || \
+     defined(__xtensa__)
+   #define DISABLE_MATHUTILS_ASM_ROUND_INT
+ #endif

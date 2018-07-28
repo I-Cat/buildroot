@@ -97,6 +97,8 @@ else ifeq ($(BR2_mips)$(BR2_mipsel)$(BR2_mips64)$(BR2_mips64el),y)
 KODI_CONF_OPTS += \
 	-DWITH_ARCH=mips$(if $(BR2_ARCH_IS_64),64) \
 	-DWITH_CPU=mips$(if $(BR2_ARCH_IS_64),64)
+else ifeq ($(BR2_or1k),y)
+KODI_CONF_OPTS += -DWITH_ARCH=or1k -DWITH_CPU=or1k
 else ifeq ($(BR2_powerpc)$(BR2_powerpc64le),y)
 KODI_CONF_OPTS += \
 	-DWITH_ARCH=powerpc$(if $(BR2_ARCH_IS_64),64) \
