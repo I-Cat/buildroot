@@ -76,7 +76,6 @@ ASTERISK_CONF_OPTS = \
 	--without-osptk \
 	--without-oss \
 	--without-postgres \
-	--without-pjproject \
 	--without-pjproject-bundled \
 	--without-popt \
 	--without-resample \
@@ -178,6 +177,13 @@ ASTERISK_DEPENDENCIES += libogg
 ASTERISK_CONF_OPTS += --with-ogg
 else
 ASTERISK_CONF_OPTS += --without-ogg
+endif
+
+ifeq ($(BR2_PACKAGE_LIBPJSIP),y)
+ASTERISK_DEPENDENCIES += libpjsip
+ASTERISK_CONF_OPTS += --with-pjproject
+else
+ASTERISK_CONF_OPTS += --without-pjproject
 endif
 
 ifeq ($(BR2_PACKAGE_OPUS),y)
