@@ -13,6 +13,19 @@ LIBPJSIP_LICENSE_FILES = COPYING
 LIBPJSIP_INSTALL_STAGING = YES
 LIBPJSIP_MAKE = $(MAKE1)
 
+# Asterisk patch set
+LIBPJSIP_PATCH = \
+	https://github.com/asterisk/asterisk/raw/16.0/third-party/pjproject/patches/0000-set_apps_initial_log_level.patch \
+	https://github.com/asterisk/asterisk/raw/16.0/third-party/pjproject/patches/0021-sip_parser-Fix-return-code-in-pjsip_find_msg-and-add.patch \
+	https://github.com/asterisk/asterisk/raw/16.0/third-party/pjproject/patches/0030-sip_transport-Destroy-transports-not-in-hash.patch \
+	https://github.com/asterisk/asterisk/raw/16.0/third-party/pjproject/patches/0040-183_without_to_tag.patch \
+	https://github.com/asterisk/asterisk/raw/16.0/third-party/pjproject/patches/0050-dont_terminate_session_early.patch \
+	https://github.com/asterisk/asterisk/raw/16.0/third-party/pjproject/patches/0060-sip_msg-Prevent-crash-on-header-without-vptr.patch \
+	https://github.com/asterisk/asterisk/raw/16.0/third-party/pjproject/patches/0070-os_core_unix-Set-mutex-NULL-in-atomic-destroy-and-ad.patch \
+	https://github.com/asterisk/asterisk/raw/16.0/third-party/pjproject/patches/0080-timer-Clean-up-usage-of-timer-heap.patch \
+	https://github.com/asterisk/asterisk/raw/16.0/third-party/pjproject/patches/0090-sip_transaction-In-tsx_timer_callback-check-if-tsx-i.patch \
+	https://github.com/asterisk/asterisk/raw/16.0/third-party/pjproject/patches/0100-sip_inv-Add-option-to-accept-updated-SDP-on-same-To-.patch
+
 LIBPJSIP_CFLAGS = $(TARGET_CFLAGS) -DPJ_HAS_IPV6=1
 
 # relocation truncated to fit: R_68K_GOT16O
