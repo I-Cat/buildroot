@@ -111,6 +111,12 @@ MESA3D_CONF_OPTS += \
 	-Dshared-glapi=true \
 	-Dgallium-drivers=$(subst $(space),$(comma),$(MESA3D_GALLIUM_DRIVERS-y)) \
 	-Dgallium-extra-hud=true
+ifeq ($(BR2_PACKAGE_LIBVA),y)
+MESA3D_CONF_OPTS += -Dgallium-va=true
+MESA3D_DEPENDENCIES += libva
+else
+MESA3D_CONF_OPTS += -Dgallium-va=false
+endif
 endif
 
 ifeq ($(BR2_PACKAGE_MESA3D_DRI_DRIVER),)
@@ -151,10 +157,6 @@ endif
 #   - Building OpenGL ES without OpenGL is not supported, so always keep opengl enabled.
 MESA3D_CONF_OPTS += -Dopengl=true
 
-# libva and mesa3d have a circular dependency
-# we do not need libva support in mesa3d, therefore disable this option
-MESA3D_CONF_OPTS += -Dgallium-va=false
-
 # libGL is only provided for a full xorg stack
 ifeq ($(BR2_PACKAGE_XORG7),y)
 MESA3D_PROVIDES += libgl
@@ -175,6 +177,8 @@ MESA3D_PLATFORMS = drm
 else ifeq ($(BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_VIRGL),y)
 MESA3D_PLATFORMS = drm
 else ifeq ($(BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_RADEONSI),y)
+MESA3D_PLATFORMS = drm
+else ifeq ($(BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_R600),y)
 MESA3D_PLATFORMS = drm
 endif
 ifeq ($(BR2_PACKAGE_WAYLAND),y)
