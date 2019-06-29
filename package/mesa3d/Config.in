@@ -312,6 +312,20 @@ config BR2_PACKAGE_PROVIDES_LIBGLES
 config BR2_PACKAGE_PROVIDES_LIBOPENCL
 	default "mesa3d" if BR2_PACKAGE_MESA3D_OPENCL
 
+config BR2_PACKAGE_MESA3D_XVMC
+	bool "XvMC state tracker"
+	depends on BR2_PACKAGE_XORG7
+	depends on BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_NOUVEAU \
+		|| BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_R600
+	select BR2_PACKAGE_XLIB_LIBXVMC
+	help
+	  XVMC state tracker (needs r600 or nouveau gallium drivers).
+
+comment "XvMC depends on X.org and needs gallium drivers: r600, nouveau"
+	depends on !BR2_PACKAGE_XORG7
+	depends on !BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_NOUVEAU \
+		|| !BR2_PACKAGE_MESA3D_GALLIUM_DRIVER_R600
+
 endif # BR2_PACKAGE_MESA3D
 
 comment "mesa3d needs a toolchain w/ C++, NPTL, dynamic library"
