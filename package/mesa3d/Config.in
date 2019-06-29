@@ -281,6 +281,18 @@ comment "OSMesa classic requires dri (classic) swrast"
 
 if BR2_PACKAGE_MESA3D_DRIVER
 
+comment "OpenGL API Support"
+
+config BR2_PACKAGE_MESA3D_OPENGL_GLX
+	bool "OpenGL GLX"
+	depends on BR2_PACKAGE_XORG7
+	help
+	  Enable GLX graphic acceleration (OpenGL + X11).
+	  GLX support needs X11 and at least one DRI or Gallium driver.
+
+comment "OpenGL GLX support needs X11"
+	depends on !BR2_PACKAGE_XORG7
+
 comment "Additional API Support"
 
 config BR2_PACKAGE_MESA3D_OPENGL_EGL
