@@ -146,6 +146,13 @@ endif
 
 comment "Legacy options removed in 2019.08"
 
+config BR2_PACKAGE_MESA3D_OSMESA
+	bool "mesa OSMesa option renamed"
+	select BR2_PACKAGE_MESA3D_OSMESA_CLASSIC
+	help
+	  The option was renamed in order to match the naming used
+	  by the meson buildsystem.
+
 config BR2_PACKAGE_XAPP_MKFONTDIR
 	bool "mkfontdir is now included in xapp_mkfontscale"
 	select BR2_PACKAGE_XAPP_MKFONTSCALE
