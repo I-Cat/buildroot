@@ -6,7 +6,7 @@
 
 # When updating the version, please also update kodi-jsonschemabuilder
 # and kodi-texturepacker
-KODI_VERSION = 18.6-Leia
+KODI_VERSION = 4226dc17e91405345d6642b4a6fdb5094dee702c
 KODI_SITE = $(call github,xbmc,xbmc,$(KODI_VERSION))
 KODI_LICENSE = GPL-2.0
 KODI_LICENSE_FILES = LICENSE.md
@@ -15,7 +15,9 @@ KODI_INSTALL_STAGING = YES
 # kodi recommends building out-of-source
 KODI_SUPPORTS_IN_SOURCE_BUILD = NO
 KODI_DEPENDENCIES = \
+	dav1d \
 	expat \
+	ffmpeg \
 	flatbuffers \
 	fmt \
 	fontconfig \
@@ -42,7 +44,7 @@ KODI_DEPENDENCIES = \
 	ncurses \
 	openssl \
 	pcre \
-	python \
+	python3 \
 	rapidjson \
 	sqlite \
 	taglib \
@@ -50,21 +52,13 @@ KODI_DEPENDENCIES = \
 	zlib
 
 # taken from tools/depends/target/*/*-VERSION
-KODI_FFMPEG_VERSION = 4.0.4-Leia-18.4
 KODI_LIBDVDCSS_VERSION = 1.4.2-Leia-Beta-5
 KODI_LIBDVDNAV_VERSION = 6.0.0-Leia-Alpha-3
 KODI_LIBDVDREAD_VERSION = 6.0.0-Leia-Alpha-3
 KODI_EXTRA_DOWNLOADS += \
-	$(call github,xbmc,FFmpeg,$(KODI_FFMPEG_VERSION))/kodi-ffmpeg-$(KODI_FFMPEG_VERSION).tar.gz \
 	$(call github,xbmc,libdvdcss,$(KODI_LIBDVDCSS_VERSION))/kodi-libdvdcss-$(KODI_LIBDVDCSS_VERSION).tar.gz \
 	$(call github,xbmc,libdvdnav,$(KODI_LIBDVDNAV_VERSION))/kodi-libdvdnav-$(KODI_LIBDVDNAV_VERSION).tar.gz \
 	$(call github,xbmc,libdvdread,$(KODI_LIBDVDREAD_VERSION))/kodi-libdvdread-$(KODI_LIBDVDREAD_VERSION).tar.gz
-
-define KODI_CPLUFF_AUTOCONF
-	cd $(KODI_SRCDIR)/lib/cpluff && ./autogen.sh
-endef
-KODI_PRE_CONFIGURE_HOOKS += KODI_CPLUFF_AUTOCONF
-KODI_DEPENDENCIES += host-automake host-autoconf host-libtool
 
 KODI_CONF_OPTS += \
 	-DCMAKE_C_FLAGS="$(TARGET_CFLAGS) $(KODI_C_FLAGS)" \
@@ -73,9 +67,9 @@ KODI_CONF_OPTS += \
 	-DENABLE_CCACHE=OFF \
 	-DENABLE_DVDCSS=ON \
 	-DENABLE_INTERNAL_CROSSGUID=OFF \
-	-DENABLE_INTERNAL_FFMPEG=ON \
+	-DWITH_FFMPEG=$(STAGING_DIR)/usr \
 	-DENABLE_INTERNAL_FLATBUFFERS=OFF \
-	-DFFMPEG_URL=$(KODI_DL_DIR)/kodi-ffmpeg-$(KODI_FFMPEG_VERSION).tar.gz \
+	-DFLATBUFFERS_FLATC_EXECUTABLE=$(HOST_DIR)/bin/flatc \
 	-DKODI_DEPENDSBUILD=OFF \
 	-DENABLE_LDGOLD=OFF \
 	-DNATIVEPREFIX=$(HOST_DIR) \
@@ -205,7 +199,7 @@ KODI_DEPENDENCIES += libegl libgles libxkbcommon waylandpp
 endif
 
 ifeq ($(BR2_PACKAGE_KODI_PLATFORM_X11_OPENGL),y)
-KODI_CONF_OPTS += -DCORE_PLATFORM_NAME=x11
+KODI_CONF_OPTS += -DX11_RENDER_SYSTEM=gl
 KODI_DEPENDENCIES += libegl libglu libgl xlib_libX11 xlib_libXext \
 	xlib_libXrandr libdrm
 endif

@@ -11,6 +11,7 @@ is here to handle this difference, so use it in kodi-config.cmake.
 Signed-off-by: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
 (rebased and simplified for Kodi 17.0-Krypton)
 Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
+(rebased for Kodi 19.0-Matrix)
 ---
  project/cmake/KodiConfig.cmake.in | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
@@ -28,10 +29,10 @@ index 76626ec..ffb8e1d 100644
  endif()
  if(NOT @APP_NAME_UC@_LIB_DIR)
    set(@APP_NAME_UC@_LIB_DIR @APP_LIB_DIR@)
-@@ -20,7 +20,7 @@ endif()
- if(NOT WIN32)
-   set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} @CXX11_SWITCH@")
+@@ -17,7 +17,7 @@
+   set(@APP_NAME_UC@_DATA_DIR @APP_DATA_DIR@)
  endif()
+ set(APP_RENDER_SYSTEM @APP_RENDER_SYSTEM@)
 -list(APPEND CMAKE_MODULE_PATH @APP_LIB_DIR@ @APP_DATA_DIR@/cmake)
 +list(APPEND CMAKE_MODULE_PATH ${CMAKE_FIND_ROOT_PATH}/@APP_LIB_DIR@ ${CMAKE_FIND_ROOT_PATH}/@APP_DATA_DIR@/cmake)
  
