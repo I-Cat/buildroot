@@ -1,5 +1,4 @@
 # Locally computed
-sha256 09a16bf0be13c7d9ed43c6608f662374cb3b8b35c05492ce1117f58270d8d005  kodi-vfs-rar-60f92ff28ee6c94211b628990696c60518bffcf6.tar.gz
-# License files
-sha256 e0c2f13c3a78c8d2b91cb846b8a13fb650fcc88c0630e38ce9c0b7c34631d1cc  lib/UnrarXLib/license.txt
-sha256 649854722a936822ab52e0801c7d7274c9a1933c9f9566a83003c96ca2c9c657  debian/copyright
+sha256 8f1048d04e5ed7911e1209c6b714c52b5f6f18d19adfeec942f7c079cfdc3f9f  kodi-vfs-rar-3.1.4-Matrix.tar.gz
+sha256 335040f4cf544fccf038ec4f3b1e8d97441faae55de6610ca21c659013b6974d  debian/copyright
+sha256 6ecc1687808b7d66b24f874755abfed7464d9751ed0001cd4e8e5d9bf397ff8a  lib/UnrarXLib/license.txt
