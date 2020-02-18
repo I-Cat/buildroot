@@ -1,0 +1,456 @@
+Change to use for Kodi Matrix and version increase
+
+Downloaded from upstream PR 22.
+
+Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
+
+From c6fd102dd8a7468277e9b8537e16db04b28e1189 Mon Sep 17 00:00:00 2001
+From: Alwin Esch <alwin.esch@web.de>
+Date: Fri, 9 Aug 2019 19:49:05 +0200
+Subject: [PATCH] build with Kodi master (Matrix) API
+
+---
+ .travis.yml | 8 ++++----
+ Jenkinsfile | 2 +-
+ README.md   | 2 +-
+ 3 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/.travis.yml b/.travis.yml
+index 4610876..5d0fbc2 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -3,8 +3,8 @@
+ #
+ # Define the build matrix
+ #
+-# Travis defaults to building on Ubuntu Precise when building on
+-# Linux. We need Trusty in order to get up to date versions of
++# Travis defaults to building on Ubuntu Trusty when building on
++# Linux. We need Xenial in order to get up to date versions of
+ # cmake and g++.
+ #
+ env:
+@@ -22,7 +22,7 @@ matrix:
+       sudo: required
+       compiler: clang
+     - os: osx
+-      osx_image: xcode9
++      osx_image: xcode10.2
+ 
+ #
+ # Some of the OS X images don't have cmake, contrary to what people
+@@ -41,7 +41,7 @@ before_install:
+ #
+ before_script:
+   - cd $TRAVIS_BUILD_DIR/..
+-  - git clone --branch Leia --depth=1 https://github.com/xbmc/xbmc.git
++  - git clone --branch master --depth=1 https://github.com/xbmc/xbmc.git
+   - cd ${app_id} && mkdir build && cd build
+   - mkdir -p definition/${app_id}
+   - echo ${app_id} $TRAVIS_BUILD_DIR $TRAVIS_COMMIT > definition/${app_id}/${app_id}.txt
+diff --git a/Jenkinsfile b/Jenkinsfile
+index de6ae25..3d3080a 100644
+--- a/Jenkinsfile
++++ b/Jenkinsfile
+@@ -1 +1 @@
+-buildPlugin(version: "Leia")
++buildPlugin(version: "Matrix")
+diff --git a/README.md b/README.md
+index 795c242..1e17736 100644
+--- a/README.md
++++ b/README.md
+@@ -15,7 +15,7 @@ Also make sure you follow this README from the branch in question.
+ The following instructions assume you will have built Kodi already in the `kodi-build` directory 
+ suggested by the README.
+ 
+-1. `git clone --branch Leia https://github.com/xbmc/xbmc.git`
++1. `git clone --branch master https://github.com/xbmc/xbmc.git`
+ 2. `git clone https://github.com/notspiff/screensavers.rsxs.git`
+ 3. `cd screensavers.rsxs && mkdir build && cd build`
+ 4. `cmake -DADDONS_TO_BUILD=screensavers.rsxs -DADDON_SRC_PREFIX=../.. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../../xbmc/kodi-build/addons -DPACKAGE_ZIP=1 ../../xbmc/cmake/addons`
+
+From b4fee56f4b260af89fec3bcb505fcdd90c0c5f8a Mon Sep 17 00:00:00 2001
+From: Alwin Esch <alwin.esch@web.de>
+Date: Fri, 9 Aug 2019 19:53:00 +0200
+Subject: [PATCH] fix FindOpenGLES.cmake use on iOS (there darwin_embedded
+ now)
+
+---
+ CMakeLists.txt     | 4 +++-
+ FindOpenGLES.cmake | 3 ++-
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index a86ccd0..b52db55 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -52,7 +52,9 @@ list(APPEND DEPENDS glm gli rsMath kodiOpenGL ImageMagick)
+ list(APPEND DEPLIBS rsMath kodiOpenGL Implicit Rgbhsl)
+ 
+ if(NOT ${CORE_SYSTEM_NAME} STREQUAL "")
+-  if(${CORE_SYSTEM_NAME} STREQUAL "osx" OR ${CORE_SYSTEM_NAME} STREQUAL "ios")
++  if(${CORE_SYSTEM_NAME} STREQUAL "osx" OR
++     ${CORE_SYSTEM_NAME} STREQUAL "ios" OR
++     ${CORE_SYSTEM_NAME} STREQUAL "darwin_embedded")
+     list(APPEND DEPLIBS "-framework CoreVideo")
+   endif()
+ endif()
+diff --git a/FindOpenGLES.cmake b/FindOpenGLES.cmake
+index 0191d9e..cf3a407 100644
+--- a/FindOpenGLES.cmake
++++ b/FindOpenGLES.cmake
+@@ -18,7 +18,8 @@ if(PKG_CONFIG_FOUND)
+   pkg_check_modules(PC_OPENGLES ${_brcmprefix}glesv2 QUIET)
+ endif()
+ 
+-if(NOT CORE_SYSTEM_NAME STREQUAL ios)
++if(NOT CORE_SYSTEM_NAME STREQUAL ios AND
++   NOT CORE_SYSTEM_NAME STREQUAL darwin_embedded)
+   find_path(OPENGLES_INCLUDE_DIR GLES2/gl2.h
+                                  PATHS ${PC_OPENGLES_INCLUDEDIR})
+   find_library(OPENGLES_gl_LIBRARY NAMES ${_brcmprefix}GLESv2
+
+From 90c4ff860d73b027c6409037be206e34d1eff159 Mon Sep 17 00:00:00 2001
+From: Alwin Esch <alwin.esch@web.de>
+Date: Fri, 9 Aug 2019 19:55:46 +0200
+Subject: [PATCH] increase version to 3.1.0 (API related)
+
+---
+ screensaver.rsxs.biof/addon.xml.in        | 2 +-
+ screensaver.rsxs.busyspheres/addon.xml.in | 2 +-
+ screensaver.rsxs.colorfire/addon.xml.in   | 2 +-
+ screensaver.rsxs.cyclone/addon.xml.in     | 2 +-
+ screensaver.rsxs.drempels/addon.xml.in    | 2 +-
+ screensaver.rsxs.euphoria/addon.xml.in    | 2 +-
+ screensaver.rsxs.feedback/addon.xml.in    | 2 +-
+ screensaver.rsxs.fieldlines/addon.xml.in  | 2 +-
+ screensaver.rsxs.flocks/addon.xml.in      | 2 +-
+ screensaver.rsxs.flux/addon.xml.in        | 2 +-
+ screensaver.rsxs.helios/addon.xml.in      | 2 +-
+ screensaver.rsxs.hufosmoke/addon.xml.in   | 2 +-
+ screensaver.rsxs.hufotunnel/addon.xml.in  | 2 +-
+ screensaver.rsxs.hyperspace/addon.xml.in  | 2 +-
+ screensaver.rsxs.lattice/addon.xml.in     | 2 +-
+ screensaver.rsxs.lorenz/addon.xml.in      | 2 +-
+ screensaver.rsxs.matrixview/addon.xml.in  | 2 +-
+ screensaver.rsxs.microcosm/addon.xml.in   | 2 +-
+ screensaver.rsxs.plasma/addon.xml.in      | 2 +-
+ screensaver.rsxs.skyrocket/addon.xml.in   | 2 +-
+ screensaver.rsxs.solarwinds/addon.xml.in  | 2 +-
+ screensaver.rsxs.spirographx/addon.xml.in | 2 +-
+ screensaver.rsxs.sundancer2/addon.xml.in  | 2 +-
+ screensavers.rsxs/addon.xml.in            | 2 +-
+ 24 files changed, 24 insertions(+), 24 deletions(-)
+
+diff --git a/screensaver.rsxs.biof/addon.xml.in b/screensaver.rsxs.biof/addon.xml.in
+index 0ad54a8..a822968 100644
+--- a/screensaver.rsxs.biof/addon.xml.in
++++ b/screensaver.rsxs.biof/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.biof"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Biof"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.busyspheres/addon.xml.in b/screensaver.rsxs.busyspheres/addon.xml.in
+index a4d8ce4..42569e1 100644
+--- a/screensaver.rsxs.busyspheres/addon.xml.in
++++ b/screensaver.rsxs.busyspheres/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.busyspheres"
+-  version="3.0.0"
++  version="3.1.0"
+   name="BusySpheres"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.colorfire/addon.xml.in b/screensaver.rsxs.colorfire/addon.xml.in
+index ccb0dc6..2c669fd 100644
+--- a/screensaver.rsxs.colorfire/addon.xml.in
++++ b/screensaver.rsxs.colorfire/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.colorfire"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Colorfire"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.cyclone/addon.xml.in b/screensaver.rsxs.cyclone/addon.xml.in
+index 134ab2e..cf2a0c9 100644
+--- a/screensaver.rsxs.cyclone/addon.xml.in
++++ b/screensaver.rsxs.cyclone/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.cyclone"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Cyclone"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.drempels/addon.xml.in b/screensaver.rsxs.drempels/addon.xml.in
+index d98774c..fc9e48c 100644
+--- a/screensaver.rsxs.drempels/addon.xml.in
++++ b/screensaver.rsxs.drempels/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.drempels"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Drempels"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.euphoria/addon.xml.in b/screensaver.rsxs.euphoria/addon.xml.in
+index d9a9d73..2a7ef90 100644
+--- a/screensaver.rsxs.euphoria/addon.xml.in
++++ b/screensaver.rsxs.euphoria/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.euphoria"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Euphoria"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.feedback/addon.xml.in b/screensaver.rsxs.feedback/addon.xml.in
+index 2469f58..ebbc0ab 100644
+--- a/screensaver.rsxs.feedback/addon.xml.in
++++ b/screensaver.rsxs.feedback/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.feedback"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Feedback"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.fieldlines/addon.xml.in b/screensaver.rsxs.fieldlines/addon.xml.in
+index 7a0d4e6..3296b56 100644
+--- a/screensaver.rsxs.fieldlines/addon.xml.in
++++ b/screensaver.rsxs.fieldlines/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.fieldlines"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Fieldlines"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.flocks/addon.xml.in b/screensaver.rsxs.flocks/addon.xml.in
+index cc67ab8..78e3ee4 100644
+--- a/screensaver.rsxs.flocks/addon.xml.in
++++ b/screensaver.rsxs.flocks/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.flocks"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Flocks"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.flux/addon.xml.in b/screensaver.rsxs.flux/addon.xml.in
+index f655f60..69e5294 100644
+--- a/screensaver.rsxs.flux/addon.xml.in
++++ b/screensaver.rsxs.flux/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.flux"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Flux"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.helios/addon.xml.in b/screensaver.rsxs.helios/addon.xml.in
+index 75af8bf..6c3b709 100644
+--- a/screensaver.rsxs.helios/addon.xml.in
++++ b/screensaver.rsxs.helios/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.helios"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Helios"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.hufosmoke/addon.xml.in b/screensaver.rsxs.hufosmoke/addon.xml.in
+index 456ff1a..5b975ea 100644
+--- a/screensaver.rsxs.hufosmoke/addon.xml.in
++++ b/screensaver.rsxs.hufosmoke/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.hufosmoke"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Hufo Smoke"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.hufotunnel/addon.xml.in b/screensaver.rsxs.hufotunnel/addon.xml.in
+index 1b70435..0fbd426 100644
+--- a/screensaver.rsxs.hufotunnel/addon.xml.in
++++ b/screensaver.rsxs.hufotunnel/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.hufotunnel"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Hufo Tunnel"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.hyperspace/addon.xml.in b/screensaver.rsxs.hyperspace/addon.xml.in
+index e04859e..d305668 100644
+--- a/screensaver.rsxs.hyperspace/addon.xml.in
++++ b/screensaver.rsxs.hyperspace/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.hyperspace"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Hyperspace"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.lattice/addon.xml.in b/screensaver.rsxs.lattice/addon.xml.in
+index 8957f25..ba06e8c 100644
+--- a/screensaver.rsxs.lattice/addon.xml.in
++++ b/screensaver.rsxs.lattice/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.lattice"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Lattice"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.lorenz/addon.xml.in b/screensaver.rsxs.lorenz/addon.xml.in
+index f4e82b9..5032604 100644
+--- a/screensaver.rsxs.lorenz/addon.xml.in
++++ b/screensaver.rsxs.lorenz/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.lorenz"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Lorenz Attractor"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.matrixview/addon.xml.in b/screensaver.rsxs.matrixview/addon.xml.in
+index 5e1a60d..e7c744c 100644
+--- a/screensaver.rsxs.matrixview/addon.xml.in
++++ b/screensaver.rsxs.matrixview/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.matrixview"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Matrix View"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.microcosm/addon.xml.in b/screensaver.rsxs.microcosm/addon.xml.in
+index ac818f5..7168655 100644
+--- a/screensaver.rsxs.microcosm/addon.xml.in
++++ b/screensaver.rsxs.microcosm/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.microcosm.biof"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Microcosm"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.plasma/addon.xml.in b/screensaver.rsxs.plasma/addon.xml.in
+index 3e15be6..ebb4eab 100644
+--- a/screensaver.rsxs.plasma/addon.xml.in
++++ b/screensaver.rsxs.plasma/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.plasma"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Plasma"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.skyrocket/addon.xml.in b/screensaver.rsxs.skyrocket/addon.xml.in
+index b5b43fe..d937694 100644
+--- a/screensaver.rsxs.skyrocket/addon.xml.in
++++ b/screensaver.rsxs.skyrocket/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.skyrocket"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Skyrocket"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.solarwinds/addon.xml.in b/screensaver.rsxs.solarwinds/addon.xml.in
+index 8ca2c93..3c9b6bc 100644
+--- a/screensaver.rsxs.solarwinds/addon.xml.in
++++ b/screensaver.rsxs.solarwinds/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.solarwinds"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Solar Winds"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.spirographx/addon.xml.in b/screensaver.rsxs.spirographx/addon.xml.in
+index 94685f3..e084eec 100644
+--- a/screensaver.rsxs.spirographx/addon.xml.in
++++ b/screensaver.rsxs.spirographx/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.spirographx"
+-  version="3.0.0"
++  version="3.1.0"
+   name="SpiroGraphX"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensaver.rsxs.sundancer2/addon.xml.in b/screensaver.rsxs.sundancer2/addon.xml.in
+index 299f13e..ae579dc 100644
+--- a/screensaver.rsxs.sundancer2/addon.xml.in
++++ b/screensaver.rsxs.sundancer2/addon.xml.in
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <addon
+   id="screensaver.rsxs.sundancer2"
+-  version="3.0.0"
++  version="3.1.0"
+   name="Sundancer 2"
+   provider-name="Team Kodi">
+   <requires>@ADDON_DEPENDS@</requires>
+diff --git a/screensavers.rsxs/addon.xml.in b/screensavers.rsxs/addon.xml.in
+index fa1a0dc..9786173 100644
+--- a/screensavers.rsxs/addon.xml.in
++++ b/screensavers.rsxs/addon.xml.in
+@@ -3,7 +3,7 @@
+ debian package build.-->
+ <addon
+   id="screensavers.rsxs"
+-  version="3.0.0"
++  version="3.1.0"
+   name="RSXS Screensaver collection"
+   provider-name="Team Kodi">
+   <extension point="xbmc.addon.metadata">
