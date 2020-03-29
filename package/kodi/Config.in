@@ -388,6 +388,7 @@ config BR2_PACKAGE_KODI_SKIN_ESTOUCHY
 endmenu
 
 menu "Virtual file systems"
+	source "package/kodi-vfs-libarchive/Config.in"
 	source "package/kodi-vfs-rar/Config.in"
 	source "package/kodi-vfs-sftp/Config.in"
 endmenu
