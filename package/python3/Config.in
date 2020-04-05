@@ -41,6 +41,12 @@ menu "core python3 modules"
 
 comment "The following modules are unusual or require extra libraries"
 
+config BR2_PACKAGE_PYTHON3_BERKELEYDB
+	bool "berkeleydb"
+	select BR2_PACKAGE_BERKELEYDB
+	help
+	  berkeleydb module for Python3
+
 config BR2_PACKAGE_PYTHON3_BZIP2
 	bool "bz2 module"
 	select BR2_PACKAGE_BZIP2
