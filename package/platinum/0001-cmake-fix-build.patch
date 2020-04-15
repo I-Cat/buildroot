@@ -1,0 +1,92 @@
+From 43831e2d1a9dc314e27af034d8611656e07f3cc0 Mon Sep 17 00:00:00 2001
+From: Bernd Kuhls <bernd.kuhls@t-online.de>
+Date: Wed, 15 Apr 2020 19:50:24 +0200
+Subject: [PATCH] [cmake] fix build
+
+Fixes two build errors:
+
+CMake Warning at CMakeLists.txt:11 (find_package):
+  By not providing "FindNeptune.cmake" in CMAKE_MODULE_PATH this project has
+  asked CMake to find a package configuration file provided by "Neptune", but
+  CMake did not find one.
+
+CMake Error at CMakeLists.txt:33 (install):
+  install TARGETS given no LIBRARY DESTINATION for shared library target
+  "Platinum".
+
+Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
+---
+ CMakeLists.txt    |  6 +++++-
+ FindNeptune.cmake | 36 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 41 insertions(+), 1 deletion(-)
+ create mode 100644 FindNeptune.cmake
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index bc564dd..54a25be 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -7,6 +7,8 @@ project(Platinum
+         LANGUAGES CXX
+         VERSION 1.2.0)
+ 
++list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR})
++
+ find_package(PkgConfig)
+ find_package(Neptune)
+ 
+@@ -29,7 +31,9 @@ configure_file(cmake/platinum.pc.cmake
+                ${CMAKE_CURRENT_BINARY_DIR}/platinum.pc @ONLY)
+ 
+ install(TARGETS ${PROJECT_NAME}
+-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
++        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
++        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
++        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+ 
+ get_property(headers GLOBAL PROPERTY core_HEADERS)
+ install(FILES ${headers}
+diff --git a/FindNeptune.cmake b/FindNeptune.cmake
+new file mode 100644
+index 0000000..3a538a9
+--- /dev/null
++++ b/FindNeptune.cmake
+@@ -0,0 +1,36 @@
++#.rst:
++# FindNeptune
++# -------
++# Finds the libNeptune library
++#
++# This will will define the following variables::
++#
++# NEPTUNE_FOUND - system has libNeptune
++# NEPTUNE_INCLUDE_DIRS - the libNeptune include directory
++# NEPTUNE_LIBRARIES - the libNeptune libraries
++# NEPTUNE_DEFINITIONS - the libNeptune compile definitions
++
++if(PKG_CONFIG_FOUND)
++  pkg_check_modules(PC_NEPTUNE neptune QUIET)
++endif()
++
++set(NEPTUNE_VERSION ${PC_NEPTUNE_VERSION})
++
++find_path(NEPTUNE_INCLUDE_DIR NAMES Neptune.h
++                              PATHS ${PC_NEPTUNE_INCLUDEDIR})
++
++find_library(NEPTUNE_LIBRARY NAMES Neptune
++                             PATHS ${PC_NEPTUNE_LIBDIR})
++
++include(FindPackageHandleStandardArgs)
++find_package_handle_standard_args(NEPTUNE
++                                  REQUIRED_VARS NEPTUNE_LIBRARY NEPTUNE_INCLUDE_DIR
++                                  VERSION_VAR NEPTUNE_VERSION)
++
++if(NEPTUNE_FOUND)
++  set(NEPTUNE_LIBRARIES ${NEPTUNE_LIBRARY})
++  set(NEPTUNE_INCLUDE_DIRS ${NEPTUNE_INCLUDE_DIR})
++  set(NEPTUNE_DEFINITIONS -DHAVE_LIBNEPTUNE=1)
++endif()
++
++mark_as_advanced(NEPTUNE_INCLUDE_DIR NEPTUNE_LIBRARY)
+-- 
+2.26.1
+
