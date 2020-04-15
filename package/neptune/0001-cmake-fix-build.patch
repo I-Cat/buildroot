@@ -1,0 +1,34 @@
+From 113eb7a22be0e995a4fa976a1ee8cc9923b72db9 Mon Sep 17 00:00:00 2001
+From: Bernd Kuhls <bernd.kuhls@t-online.de>
+Date: Wed, 15 Apr 2020 19:30:28 +0200
+Subject: [PATCH] [cmake] fix build
+
+Fixes
+
+CMake Error at CMakeLists.txt:25 (install):
+  install TARGETS given no LIBRARY DESTINATION for shared library target
+  "Neptune".
+
+Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
+---
+ CMakeLists.txt | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f850f31..6cc638b 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -23,7 +23,9 @@ configure_file(cmake/neptune.pc.cmake
+                ${CMAKE_CURRENT_BINARY_DIR}/neptune.pc @ONLY)
+ 
+ install(TARGETS ${PROJECT_NAME}
+-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
++        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
++        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
++        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+ 
+ install(FILES cmake/FindNeptune.cmake
+         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+-- 
+2.26.1
+
