@@ -276,6 +276,8 @@ comment "libvdpau support needs platform 'X11/OpenGL'"
 
 config BR2_PACKAGE_KODI_UPNP
 	bool "upnp"
+	select BR2_PACKAGE_NEPTUNE
+	select BR2_PACKAGE_PLATINUM
 	help
 	  Enable UPnP support
 

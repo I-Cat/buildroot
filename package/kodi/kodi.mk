@@ -6,8 +6,8 @@
 
 # When updating the version, please also update kodi-jsonschemabuilder
 # and kodi-texturepacker
-KODI_VERSION = 19.0b1-Matrix
-KODI_SITE = $(call github,xbmc,xbmc,$(KODI_VERSION))
+KODI_VERSION = 2a2ea51e65b542784c4eec07fe072faeeea5cc87
+KODI_SITE = $(call github,bkuhls,xbmc,$(KODI_VERSION))
 KODI_LICENSE = GPL-2.0
 KODI_LICENSE_FILES = LICENSE.md
 # needed for binary addons
@@ -325,6 +325,7 @@ endif
 
 ifeq ($(BR2_PACKAGE_KODI_UPNP),y)
 KODI_CONF_OPTS += -DENABLE_UPNP=ON
+KODI_DEPENDENCIES += neptune platinum
 else
 KODI_CONF_OPTS += -DENABLE_UPNP=OFF
 endif

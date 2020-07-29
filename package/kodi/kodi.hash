@@ -1,5 +1,6 @@
 # Locally computed
 sha256  9bc8c94aa60eb4012b8f18dd8fd8eed20fd9a9e8c655fcc922998d7df654c8b5  kodi-19.0b1-Matrix.tar.gz
+sha256  091893b5fe8b712fa8510d5b7a5a4dc31d21a7d5131432020cb33562197112af  kodi-2a2ea51e65b542784c4eec07fe072faeeea5cc87.tar.gz
 sha256  38816f8373e243bc5950449b4f3b18938c4e1c59348e3411e23f31db4072e40d  kodi-libdvdcss-1.4.2-Leia-Beta-5.tar.gz
 sha256  071e414e61b795f2ff9015b21a85fc009dde967f27780d23092643916538a57a  kodi-libdvdnav-6.0.0-Leia-Alpha-3.tar.gz
 sha256  a30b6aa0aad0f2c505bc77948af2d5531a80b6e68112addb4c123fca24d5d3bf  kodi-libdvdread-6.0.0-Leia-Alpha-3.tar.gz
