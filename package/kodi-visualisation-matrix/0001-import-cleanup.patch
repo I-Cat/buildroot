@@ -1,0 +1,34 @@
+From 8cded60c65707a9d14c32addc659c6f91bf398b5 Mon Sep 17 00:00:00 2001
+From: sarbes <sarbes@kodi.tv>
+Date: Sun, 5 Jul 2020 16:33:08 +0200
+Subject: [PATCH] import cleanup
+
+Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
+[downloaded from upstream commit
+ https://github.com/xbmc/visualization.matrix/commit/8cded60c65707a9d14c32addc659c6f91bf398b5]
+---
+ src/main.cpp | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/src/main.cpp b/src/main.cpp
+index 571af38..b2c3b5c 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -19,7 +19,6 @@
+  */
+ 
+ #include "main.h"
+-#include "lodepng.h"
+ 
+ #include <regex>
+ 
+@@ -29,8 +28,7 @@
+ #define STBI_ONLY_BMP
+ #include "stb_image.h"
+ #include "kodi/Filesystem.h"
+-#include "kodi/libXBMC_addon.h"
+-#include <kodi/General.h>
++#include "kodi/General.h"
+ 
+ 
+ 
