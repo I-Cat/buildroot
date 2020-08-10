@@ -1,0 +1,56 @@
+From c2a9186c71d366fd4336be45a8296545999dd992 Mon Sep 17 00:00:00 2001
+From: Justin Maggard <jmaggard@netgear.com>
+Date: Thu, 11 Jan 2018 16:09:15 -0800
+Subject: [PATCH] Increase MAX_LAN_ADDR to 8
+
+Signed-off-by: Bernd Kuhls <bernd.kuhls@t-online.de>
+[downloaded from upstream commit
+ https://sourceforge.net/p/minidlna/git/ci/c2a9186/]
+---
+ minidlna.conf   | 2 +-
+ minidlna.conf.5 | 2 +-
+ minidlnatypes.h | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/minidlna.conf b/minidlna.conf
+index fe2925c..82db5f1 100644
+--- a/minidlna.conf
++++ b/minidlna.conf
+@@ -1,7 +1,7 @@
+ # port for HTTP (descriptions, SOAP, media transfer) traffic
+ port=8200
+ 
+-# network interfaces to serve, comma delimited
++# network interfaces to serve, comma delimited (8 interfaces max)
+ #network_interface=eth0
+ 
+ # specify the user account name or uid to run as
+diff --git a/minidlna.conf.5 b/minidlna.conf.5
+index 8b97c4c..7f6b425 100644
+--- a/minidlna.conf.5
++++ b/minidlna.conf.5
+@@ -26,7 +26,7 @@ There should be no need to change this.
+ .fi
+ 
+ .IP "\fBnetwork_interface\fP"
+-Network interfaces to serve, comma delimited. Defaults to all.
++Network interfaces to serve, comma delimited. Maximum is 8 interfaces. Defaults to all.
+ 
+ .IP "\fBstrict_dlna\fP"
+ .nf
+diff --git a/minidlnatypes.h b/minidlnatypes.h
+index 7cfad89..a92cc7d 100644
+--- a/minidlnatypes.h
++++ b/minidlnatypes.h
+@@ -34,7 +34,7 @@
+ #include <time.h>
+ #include <fcntl.h>
+ 
+-#define MAX_LAN_ADDR 4
++#define MAX_LAN_ADDR 8
+ /* structure for storing lan addresses
+  * with ascii representation and mask */
+ struct lan_addr_s {
+-- 
+2.27.0
+
